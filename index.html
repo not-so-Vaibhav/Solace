@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solace — Peer Support Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<h2 class="sr-only">Solace — Peer Emotional Support Platform for Students. Navigate between Landing, Booking, User Dashboard, Listener Dashboard, and Admin Dashboard.</h2>
+
+<nav>
+  <div class="logo">Sol<span>ace</span></div>
+  <div class="nav-links">
+    <a onclick="showPage('landing')">Home</a>
+    <a onclick="showPage('booking')">Book Session</a>
+    <a onclick="showPage('user-dash')">My Space</a>
+  </div>
+  <div class="nav-role">
+    <button class="role-btn active" onclick="setRole('user',this)">Student</button>
+    <button class="role-btn" onclick="setRole('listener',this)">Listener</button>
+    <button class="role-btn" onclick="setRole('admin',this)">Admin</button>
+  </div>
+</nav>
+
+<!-- ==================== LANDING ==================== -->
+<div class="page active" id="page-landing">
+
+  <!-- Hero -->
+  <div class="hero">
+    <div>
+      <div class="hero-badge">Peer Support, Not Therapy</div>
+      <h1>You don't have to carry <em>everything</em> alone.</h1>
+      <p class="hero-sub">A calm, private space to talk with trained student listeners — whenever you're feeling overwhelmed, burnt out, or just need to be heard.</p>
+      <div class="hero-btns">
+        <button class="btn-primary" onclick="showPage('booking')">Book a Session</button>
+        <button class="btn-secondary" onclick="scrollToHow()">How it works ↓</button>
+      </div>
+      <p class="hero-disclaimer">Solace is not a licensed therapy service. We are peer supporters, not medical or mental health professionals.</p>
+    </div>
+    <div class="hero-visual">
+      <div class="hero-card-stack">
+        <div class="hero-card featured">
+          <div class="hc-top">
+            <div class="avatar av-teal">P</div>
+            <div>
+              <div class="hc-name">Priya M.</div>
+              <div class="hc-tag">3rd Year Psychology • Active Listener</div>
+            </div>
+          </div>
+          <div class="hc-quote">"I'm here to listen — not judge, not advise, just be present with whatever you're going through."</div>
+          <div class="hc-meta">
+            <div class="hc-chip">Academic stress</div>
+            <div class="hc-chip">Burnout</div>
+            <div class="hc-chip">Loneliness</div>
+          </div>
+        </div>
+        <div class="hero-card">
+          <div class="hc-top">
+            <div class="avatar av-warm">R</div>
+            <div>
+              <div class="hc-name">Rohan K.</div>
+              <div class="hc-tag">Final Year Engineering • Verified Listener</div>
+            </div>
+          </div>
+          <div class="hc-quote">"Sometimes you just need someone who gets what exam season feels like."</div>
+        </div>
+      </div>
+      <div class="hero-stat-row">
+        <div class="stat-pill"><span class="stat-num">2,400+</span><div class="stat-label">Sessions completed</div></div>
+        <div class="stat-pill"><span class="stat-num">98%</span><div class="stat-label">Feel heard</div></div>
+        <div class="stat-pill"><span class="stat-num">48</span><div class="stat-label">Trained listeners</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- How it works -->
+  <div class="section" id="how-section">
+    <div class="section-header">
+      <div class="section-label">How it works</div>
+      <div class="section-title">Simple, safe, and built for students</div>
+      <div class="section-sub">From booking to session in under 2 minutes. No long waitlists. No awkward intake forms.</div>
+    </div>
+    <div class="steps-grid">
+      <div class="step-card">
+        <div class="step-num">1</div>
+        <h3>Choose your session</h3>
+        <p>Pick the type of conversation that feels right — a quick vent, a deeper talk, or a guided reflection. Choose your own listener or let us match you.</p>
+      </div>
+      <div class="step-card">
+        <div class="step-num">2</div>
+        <h3>Pick a time that works</h3>
+        <p>Browse real-time availability. Sessions happen on Google Meet — no downloads needed. You can stay anonymous with a nickname if you prefer.</p>
+      </div>
+      <div class="step-card">
+        <div class="step-num">3</div>
+        <h3>Talk. Reflect. Continue.</h3>
+        <p>After your session, receive a private AI reflection — emotional themes, journaling prompts, and small next steps. Everything stays private to you.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Session types -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-label">Session Types</div>
+      <div class="section-title">Choose what you need today</div>
+    </div>
+    <div class="sessions-grid">
+      <div class="session-card sc-vent">
+        <div class="sc-icon">💬</div>
+        <div class="sc-title">Quick Vent</div>
+        <div class="sc-duration">25 minutes</div>
+        <div class="sc-desc">Need to offload? Talk freely without any structure. Your listener will hold space without judgment — no advice unless you ask.</div>
+        <div class="sc-price">₹199 <span>/ session</span></div>
+        <button class="sc-cta" onclick="showPage('booking')">Book this session</button>
+      </div>
+      <div class="session-card sc-deep">
+        <div class="sc-icon">🌿</div>
+        <div class="sc-title">Deep Conversation</div>
+        <div class="sc-duration">50 minutes</div>
+        <div class="sc-desc">For when you need more than venting. Work through something complex with a listener trained in active, empathetic listening techniques.</div>
+        <div class="sc-price">₹349 <span>/ session</span></div>
+        <button class="sc-cta" onclick="showPage('booking')">Book this session</button>
+      </div>
+      <div class="session-card sc-reflect">
+        <div class="sc-icon">✨</div>
+        <div class="sc-title">Reflection Session</div>
+        <div class="sc-duration">40 minutes</div>
+        <div class="sc-desc">A guided conversation focused on gaining clarity. Includes AI-powered journaling prompts and a personal reflection summary after.</div>
+        <div class="sc-price">₹299 <span>/ session</span></div>
+        <button class="sc-cta" onclick="showPage('booking')">Book this session</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Listeners -->
+  <div class="testimonials-bg">
+    <div class="testimonials-inner">
+      <div class="section-header">
+        <div class="section-label">Our Listeners</div>
+        <div class="section-title">Trained peers who understand</div>
+        <div class="section-sub">Every listener is a university student trained in active listening, emotional safety, and ethical boundaries.</div>
+      </div>
+      <div class="listeners-grid">
+        <div class="listener-card">
+          <div class="lc-avatar" style="background:#D1EDE7;color:#2D6B5A">P</div>
+          <div class="lc-name">Priya M.</div>
+          <div class="lc-program">Psychology, 3rd Year • IIT Bombay</div>
+          <div class="lc-tags">
+            <span class="tag">Academic stress</span>
+            <span class="tag">Burnout</span>
+            <span class="tag">Friendships</span>
+          </div>
+          <div class="lc-rating"><span class="stars">★★★★★</span> 4.9 · 186 sessions</div>
+          <div class="availability"><span class="avail-dot"></span> Available today</div>
+        </div>
+        <div class="listener-card">
+          <div class="lc-avatar" style="background:#F5E8DA;color:#A06B3C">R</div>
+          <div class="lc-name">Rohan K.</div>
+          <div class="lc-program">Engineering, 4th Year • NIT Pune</div>
+          <div class="lc-tags">
+            <span class="tag">Exam anxiety</span>
+            <span class="tag">Imposter syndrome</span>
+            <span class="tag">Family pressure</span>
+          </div>
+          <div class="lc-rating"><span class="stars">★★★★★</span> 4.8 · 143 sessions</div>
+          <div class="availability"><span class="avail-dot"></span> Available tomorrow</div>
+        </div>
+        <div class="listener-card">
+          <div class="lc-avatar" style="background:#E8E4F8;color:#6B5EA8">A</div>
+          <div class="lc-name">Anjali S.</div>
+          <div class="lc-program">Counselling Minor, 2nd Year • TISS</div>
+          <div class="lc-tags">
+            <span class="tag">Loneliness</span>
+            <span class="tag">Identity</span>
+            <span class="tag">Heartbreak</span>
+          </div>
+          <div class="lc-rating"><span class="stars">★★★★★</span> 5.0 · 94 sessions</div>
+          <div class="availability"><span class="avail-dot"></span> Available today</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Wellness features -->
+  <div class="section">
+    <div class="wellness-grid">
+      <div>
+        <div class="section-label">After Every Session</div>
+        <div class="section-title" style="text-align:left;margin-bottom:24px">Your own private wellness space</div>
+        <div class="wellness-features">
+          <div class="wf-item">
+            <div class="wf-icon">🧠</div>
+            <div class="wf-text"><h4>AI Reflections</h4><p>Receive a private summary of emotional themes, patterns, and gentle next steps — never diagnostic, always calming.</p></div>
+          </div>
+          <div class="wf-item">
+            <div class="wf-icon">📓</div>
+            <div class="wf-text"><h4>Private Journal</h4><p>Write freely with AI-generated prompts that help you process and make sense of your inner world.</p></div>
+          </div>
+          <div class="wf-item">
+            <div class="wf-icon">📈</div>
+            <div class="wf-text"><h4>Mood Tracking</h4><p>Log how you're feeling over time. Spot patterns. Notice progress. Simple and beautiful.</p></div>
+          </div>
+          <div class="wf-item">
+            <div class="wf-icon">🔒</div>
+            <div class="wf-text"><h4>Fully Private</h4><p>Your journals and session notes are encrypted and never shared. You control your data entirely.</p></div>
+          </div>
+        </div>
+      </div>
+      <div class="wellness-visual">
+        <div class="mood-tracker">
+          <div class="mood-label">How are you feeling today?</div>
+          <div class="mood-row">
+            <div class="mood-dot" onclick="selectMood(this)">😔</div>
+            <div class="mood-dot" onclick="selectMood(this)">😟</div>
+            <div class="mood-dot" onclick="selectMood(this)">😐</div>
+            <div class="mood-dot selected" onclick="selectMood(this)">🙂</div>
+            <div class="mood-dot" onclick="selectMood(this)">😊</div>
+          </div>
+        </div>
+        <div class="journal-preview">
+          <div class="jp-title">Today's journal — private to you</div>
+          <div class="jp-text">I've been feeling a lot of pressure about placements. Everyone around me seems so sure of what they want, and I just...</div>
+          <div class="jp-prompt">✦ AI prompt: What would you tell your past self about this feeling?</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Testimonials -->
+  <div class="testimonials-bg">
+    <div class="testimonials-inner">
+      <div class="section-header">
+        <div class="section-label">Student Voices</div>
+        <div class="section-title">What students are saying</div>
+      </div>
+      <div class="testi-grid">
+        <div class="testi-card">
+          <div class="testi-quote">I was skeptical at first, but talking to someone who actually gets what JEE prep feels like was completely different from talking to any adult.</div>
+          <div class="testi-author">
+            <div class="avatar av-teal" style="width:36px;height:36px;font-size:13px">NK</div>
+            <div><strong style="font-size:14px">Nidhi K.</strong><small>Engineering aspirant, Kota</small></div>
+          </div>
+        </div>
+        <div class="testi-card">
+          <div class="testi-quote">The AI reflection after my session was surprisingly insightful. It named things I couldn't articulate myself. No judgment, just clarity.</div>
+          <div class="testi-author">
+            <div class="avatar av-purple" style="width:36px;height:36px;font-size:13px">AS</div>
+            <div><strong style="font-size:14px">Aryan S.</strong><small>MBA Student, Ahmedabad</small></div>
+          </div>
+        </div>
+        <div class="testi-card">
+          <div class="testi-quote">I cried during the session, and that was okay. My listener just stayed present. I left feeling lighter than I have in months.</div>
+          <div class="testi-author">
+            <div class="avatar av-warm" style="width:36px;height:36px;font-size:13px">MP</div>
+            <div><strong style="font-size:14px">Meera P.</strong><small>MBBS 2nd Year, Chennai</small></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FAQ -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-label">FAQ</div>
+      <div class="section-title">Common questions</div>
+    </div>
+    <div class="faq-list">
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">Is this therapy? <span class="faq-arrow">↓</span></div>
+        <div class="faq-a">No. Solace is a peer support platform, not a therapy or mental health service. Our listeners are trained student volunteers, not licensed therapists, counselors, or medical professionals. We do not diagnose, treat, or provide medical advice of any kind. If you're in crisis, please reach out to iCall (9152987821) or Vandrevala Foundation (1860-2662-345).</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">Who are the listeners? <span class="faq-arrow">↓</span></div>
+        <div class="faq-a">Listeners are university students who have completed our 20-hour training program covering active listening, emotional safety, boundaries, and when to refer users to professional support. All listeners are background-verified and approved by our admin team before going live.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">Is my conversation private? <span class="faq-arrow">↓</span></div>
+        <div class="faq-a">Yes. Sessions are conducted on Google Meet and are never recorded by Solace. Your journal entries are encrypted. Listener session notes are anonymized. The only exception is if a listener reports immediate safety concerns — in which case we follow our safeguarding protocol.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">Can I stay anonymous? <span class="faq-arrow">↓</span></div>
+        <div class="faq-a">You can use a nickname in your profile and in sessions. Your real name is only used for payment processing. Listeners will only know you by whatever name you choose to share.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">What if I'm in crisis right now? <span class="faq-arrow">↓</span></div>
+        <div class="faq-a">Solace is not a crisis service. If you are in immediate danger, please call 112 or go to your nearest emergency room. For mental health crises, iCall (9152987821) and Vandrevala Foundation (1860-2662-345) provide 24/7 support in multiple Indian languages.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">What does the AI reflection do? <span class="faq-arrow">↓</span></div>
+        <div class="faq-a">After a session, our AI (powered by Gemini) generates a private reflection based on themes you might explore in your journal. It identifies emotional patterns and suggests journaling prompts. The AI never diagnoses, never labels mental health conditions, and never provides medical or therapeutic advice.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-disclaimer">
+        <strong>Important:</strong> Solace is a peer support community, not a mental health service. Our listeners are trained student volunteers — not licensed therapists, psychologists, or medical professionals. We do not diagnose, treat, or offer clinical care. If you are experiencing a mental health emergency, please contact a qualified professional or emergency services.
+      </div>
+      <div class="footer-top">
+        <div class="footer-brand">
+          <div class="logo" style="color:#fff;margin-bottom:12px;font-size:20px">Sol<span style="color:var(--accent2)">ace</span></div>
+          <p>A peer support space for students navigating stress, burnout, and overwhelm — built with care, not clinical pretense.</p>
+        </div>
+        <div class="footer-col">
+          <h5>Platform</h5>
+          <a>Book a Session</a>
+          <a>Our Listeners</a>
+          <a>Session Types</a>
+          <a>Become a Listener</a>
+        </div>
+        <div class="footer-col">
+          <h5>Support</h5>
+          <a>Help Center</a>
+          <a>Safeguarding Policy</a>
+          <a>Refund Policy</a>
+          <a>Privacy Policy</a>
+        </div>
+        <div class="footer-col">
+          <h5>Crisis Resources</h5>
+          <a>iCall: 9152987821</a>
+          <a>Vandrevala: 1860-2662-345</a>
+          <a>NIMHANS helpline</a>
+          <a>Emergency: 112</a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>© 2025 Solace Peer Support. Not a medical service.</span>
+        <span>Made with care in India 🇮🇳</span>
+      </div>
+    </div>
+  </footer>
+</div>
+
+<!-- ==================== BOOKING ==================== -->
+<div class="page" id="page-booking">
+  <div class="booking-wrap">
+    <div class="booking-header">
+      <h2>Book a Session</h2>
+      <p>Private, peer-led conversations. Not therapy — just someone who gets it.</p>
+    </div>
+    <div class="safety-banner"><strong>Reminder:</strong> Solace listeners are trained peers, not licensed therapists. We are not equipped to handle mental health emergencies. For crisis support, please call iCall at 9152987821.</div>
+    <div class="progress-bar" id="prog-bar">
+      <div class="ps-wrap"><div class="ps-dot active" id="pd1">1</div><div class="ps-label">Session</div></div>
+      <div class="ps-line" id="pl1"></div>
+      <div class="ps-wrap"><div class="ps-dot" id="pd2">2</div><div class="ps-label">Time</div></div>
+      <div class="ps-line" id="pl2"></div>
+      <div class="ps-wrap"><div class="ps-dot" id="pd3">3</div><div class="ps-label">Listener</div></div>
+      <div class="ps-line" id="pl3"></div>
+      <div class="ps-wrap"><div class="ps-dot" id="pd4">4</div><div class="ps-label">Payment</div></div>
+    </div>
+
+    <!-- Step 1: Session Type -->
+    <div class="booking-step active" id="bstep1">
+      <div class="booking-card">
+        <div class="booking-section-title">Choose your session type</div>
+        <div class="sessions-grid" style="grid-template-columns:1fr">
+          <div class="listener-option selected" id="st1" onclick="selectST('st1','Quick Vent — 25 min','₹199')">
+            <div style="font-size:28px">💬</div>
+            <div class="lo-info">
+              <div class="lo-name">Quick Vent — 25 minutes · ₹199</div>
+              <div class="lo-tags">Free-form conversation. Just talk. No structure needed.</div>
+            </div>
+          </div>
+          <div class="listener-option" id="st2" onclick="selectST('st2','Deep Conversation — 50 min','₹349')">
+            <div style="font-size:28px">🌿</div>
+            <div class="lo-info">
+              <div class="lo-name">Deep Conversation — 50 minutes · ₹349</div>
+              <div class="lo-tags">Work through something with guided, empathetic listening.</div>
+            </div>
+          </div>
+          <div class="listener-option" id="st3" onclick="selectST('st3','Reflection Session — 40 min','₹299')">
+            <div style="font-size:28px">✨</div>
+            <div class="lo-info">
+              <div class="lo-name">Reflection Session — 40 minutes · ₹299</div>
+              <div class="lo-tags">Guided clarity conversation + AI reflection summary after.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <button class="btn-primary" style="width:100%" onclick="nextStep(2)">Continue →</button>
+    </div>
+
+    <!-- Step 2: Time Slot -->
+    <div class="booking-step" id="bstep2">
+      <div class="booking-card">
+        <div class="booking-section-title">Select a time slot</div>
+        <p style="font-size:14px;color:var(--text3);margin-bottom:4px">Saturday, May 10 · All times in IST</p>
+        <div class="slot-grid">
+          <div class="slot" onclick="selectSlot(this,'9:00 AM')"><div class="slot-time">9:00 AM</div><div class="slot-avail">2 listeners</div></div>
+          <div class="slot" onclick="selectSlot(this,'10:30 AM')"><div class="slot-time">10:30 AM</div><div class="slot-avail">3 listeners</div></div>
+          <div class="slot selected" onclick="selectSlot(this,'12:00 PM')"><div class="slot-time">12:00 PM</div><div class="slot-avail">1 listener</div></div>
+          <div class="slot" onclick="selectSlot(this,'2:00 PM')"><div class="slot-time">2:00 PM</div><div class="slot-avail">2 listeners</div></div>
+          <div class="slot" onclick="selectSlot(this,'4:30 PM')"><div class="slot-time">4:30 PM</div><div class="slot-avail">3 listeners</div></div>
+          <div class="slot" onclick="selectSlot(this,'6:00 PM')"><div class="slot-time">6:00 PM</div><div class="slot-avail">Available</div></div>
+          <div class="slot" onclick="selectSlot(this,'7:30 PM')"><div class="slot-time">7:30 PM</div><div class="slot-avail">2 listeners</div></div>
+          <div class="slot" onclick="selectSlot(this,'9:00 PM')"><div class="slot-time">9:00 PM</div><div class="slot-avail">1 listener</div></div>
+        </div>
+      </div>
+      <div style="display:flex;gap:12px">
+        <button class="btn-secondary" style="flex:1" onclick="nextStep(1)">← Back</button>
+        <button class="btn-primary" style="flex:2" onclick="nextStep(3)">Continue →</button>
+      </div>
+    </div>
+
+    <!-- Step 3: Listener -->
+    <div class="booking-step" id="bstep3">
+      <div class="booking-card">
+        <div class="booking-section-title">Choose a listener (optional)</div>
+        <div class="listener-option selected" id="lo-auto" onclick="selectListener('lo-auto','Match me automatically')">
+          <div class="avatar" style="background:var(--surface2);color:var(--text3);width:44px;height:44px;font-size:20px">🎲</div>
+          <div class="lo-info">
+            <div class="lo-name">Match me automatically</div>
+            <div class="lo-tags">We'll pair you with the best available listener for your session type</div>
+          </div>
+        </div>
+        <div class="listener-option" id="lo-priya" onclick="selectListener('lo-priya','Priya M.')">
+          <div class="avatar av-teal" style="width:44px;height:44px">P</div>
+          <div class="lo-info">
+            <div class="lo-name">Priya M. — 4.9★ · 186 sessions</div>
+            <div class="lo-tags">Academic stress · Burnout · Loneliness · Psychology, IIT Bombay</div>
+          </div>
+        </div>
+        <div class="listener-option" id="lo-anjali" onclick="selectListener('lo-anjali','Anjali S.')">
+          <div class="avatar av-purple" style="width:44px;height:44px">A</div>
+          <div class="lo-info">
+            <div class="lo-name">Anjali S. — 5.0★ · 94 sessions</div>
+            <div class="lo-tags">Loneliness · Identity · Heartbreak · TISS Mumbai</div>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;gap:12px">
+        <button class="btn-secondary" style="flex:1" onclick="nextStep(2)">← Back</button>
+        <button class="btn-primary" style="flex:2" onclick="nextStep(4)">Review & Pay →</button>
+      </div>
+    </div>
+
+    <!-- Step 4: Payment -->
+    <div class="booking-step" id="bstep4">
+      <div class="confirm-summary">
+        <div class="cs-row"><span class="cd-label">Session type</span><span id="sum-session">Quick Vent — 25 min</span></div>
+        <div class="cs-row"><span class="cd-label">Date & time</span><span>Sat, May 10 · 12:00 PM IST</span></div>
+        <div class="cs-row"><span class="cd-label">Listener</span><span id="sum-listener">Auto-matched</span></div>
+        <div class="cs-row"><span class="cd-label">Platform fee</span><span>₹19</span></div>
+        <div class="cs-row"><span class="cd-label">Total</span><span id="sum-price">₹218</span></div>
+      </div>
+      <div class="booking-card">
+        <div class="booking-section-title">Secure Payment via Razorpay</div>
+        <p style="font-size:13px;color:var(--text3);margin-bottom:16px">Your payment is processed securely. Sessions are non-refundable after 2 hours of booking.</p>
+        <button class="pay-btn" onclick="showPage('confirm')">Pay ₹218 securely →</button>
+        <div class="pay-methods">
+          <div class="pay-chip">UPI</div>
+          <div class="pay-chip">Cards</div>
+          <div class="pay-chip">Net Banking</div>
+          <div class="pay-chip">Wallets</div>
+        </div>
+      </div>
+      <button class="btn-secondary" style="width:100%;margin-top:8px" onclick="nextStep(3)">← Back</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== CONFIRMATION ==================== -->
+<div class="page" id="page-confirm">
+  <div class="confirm-page">
+    <div class="confirm-icon">✓</div>
+    <h2>You're all set.</h2>
+    <p>Your session has been booked. Take a breath — reaching out took courage.</p>
+    <div class="confirm-details">
+      <div class="cd-row"><span class="cd-label">Session</span><span>Quick Vent · 25 min</span></div>
+      <div class="cd-row"><span class="cd-label">Date & Time</span><span>Sat, May 10 · 12:00 PM IST</span></div>
+      <div class="cd-row"><span class="cd-label">Meeting link</span><span style="color:var(--accent)">Google Meet (sent to email)</span></div>
+      <div class="cd-row"><span class="cd-label">Reminder</span><span>15 min before via email</span></div>
+    </div>
+    <div class="safety-banner" style="text-align:left">Solace provides peer support only. If you're in crisis before your session, please call <strong>iCall: 9152987821</strong> — available Mon–Sat.</div>
+    <button class="btn-primary" style="width:100%;margin-top:12px" onclick="showPage('user-dash')">Go to my dashboard →</button>
+  </div>
+</div>
+
+<!-- ==================== USER DASHBOARD ==================== -->
+<div class="page" id="page-user-dash">
+  <div class="dash-layout">
+    <div class="dash-sidebar">
+      <div style="padding:0 16px 24px;border-bottom:1px solid var(--border);margin-bottom:8px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="avatar av-teal" style="width:40px;height:40px">N</div>
+          <div>
+            <div style="font-weight:500;font-size:14px">Nidhi</div>
+            <div style="font-size:12px;color:var(--text3)">Student · Kota</div>
+          </div>
+        </div>
+      </div>
+      <div class="dash-nav-item active" onclick="switchDashTab('overview',this)"><span class="dash-nav-icon">🏠</span> Overview</div>
+      <div class="dash-nav-item" onclick="switchDashTab('sessions',this)"><span class="dash-nav-icon">📅</span> My Sessions</div>
+      <div class="dash-nav-item" onclick="switchDashTab('journal',this)"><span class="dash-nav-icon">📓</span> Journal</div>
+      <div class="dash-nav-item" onclick="switchDashTab('reflections',this)"><span class="dash-nav-icon">✨</span> AI Reflections</div>
+      <div class="dash-nav-item" onclick="switchDashTab('resources',this)"><span class="dash-nav-icon">🌿</span> Resources</div>
+      <div class="dash-nav-item" onclick="switchDashTab('settings',this)"><span class="dash-nav-icon">⚙️</span> Settings</div>
+      <div style="position:absolute;bottom:24px;left:0;right:0;padding:0 16px">
+        <button class="btn-primary" style="width:100%;font-size:14px" onclick="showPage('booking')">+ Book Session</button>
+      </div>
+    </div>
+    <div class="dash-main">
+      <div id="dtab-overview">
+        <div class="dash-greeting">
+          <h2>Good evening, Nidhi 🌙</h2>
+          <p>You have a session tomorrow at 10:30 AM. How are you feeling today?</p>
+        </div>
+        <div class="dash-grid">
+          <div class="dash-stat"><div class="ds-val">7</div><div class="ds-label">Total sessions</div><div class="ds-change">↑ 2 this month</div></div>
+          <div class="dash-stat"><div class="ds-val">12</div><div class="ds-label">Journal entries</div><div class="ds-change">4 this week</div></div>
+          <div class="dash-stat"><div class="ds-val">6.8</div><div class="ds-label">Avg mood (/ 10)</div><div class="ds-change">↑ from 5.2</div></div>
+        </div>
+        <div class="upcoming-session">
+          <div class="us-accent" style="background:var(--accent)"></div>
+          <div class="us-info">
+            <div class="us-title">Deep Conversation with Priya M.</div>
+            <div class="us-meta">Tomorrow, Sunday May 11 · 10:30 AM IST · 50 minutes</div>
+          </div>
+          <span class="us-tag">Tomorrow</span>
+          <button class="join-btn">Join Meet →</button>
+        </div>
+        <div class="mood-chart">
+          <div class="mc-title">Your mood this week</div>
+          <div class="mc-bars" id="mood-bars"></div>
+        </div>
+        <div class="ai-reflection">
+          <div class="ar-label">✦ AI Reflection — May 8</div>
+          <div class="ar-text">In your last session, a recurring theme of "not feeling good enough" appeared alongside feelings of isolation during exam season. This is a deeply human experience, not a personal failing.</div>
+          <div class="ar-prompts">
+            <div class="ar-prompt">What would be enough?</div>
+            <div class="ar-prompt">Who sees the real me?</div>
+            <div class="ar-prompt">One small kindness to myself</div>
+          </div>
+        </div>
+      </div>
+      <div id="dtab-sessions" style="display:none">
+        <div class="dash-greeting"><h2>My Sessions</h2><p>History and upcoming sessions.</p></div>
+        <div class="upcoming-session"><div class="us-accent" style="background:var(--accent)"></div><div class="us-info"><div class="us-title">Deep Conversation — Priya M.</div><div class="us-meta">Sun May 11 · 10:30 AM · Upcoming</div></div><span class="us-tag">Upcoming</span><button class="join-btn">Join →</button></div>
+        <div class="upcoming-session"><div class="us-accent" style="background:var(--border2)"></div><div class="us-info"><div class="us-title">Quick Vent — Rohan K.</div><div class="us-meta">Sat May 3 · 6:00 PM · Completed</div></div><span class="us-tag" style="background:var(--surface2);color:var(--text3)">Done</span></div>
+        <div class="upcoming-session"><div class="us-accent" style="background:var(--border2)"></div><div class="us-info"><div class="us-title">Reflection Session — Anjali S.</div><div class="us-meta">Wed Apr 28 · 8:00 PM · Completed</div></div><span class="us-tag" style="background:var(--surface2);color:var(--text3)">Done</span></div>
+      </div>
+      <div id="dtab-journal" style="display:none">
+        <div class="dash-greeting"><h2>My Journal</h2><p>Your private space. Encrypted and visible only to you.</p></div>
+        <div class="journal-entry-area">
+          <div style="font-size:13px;color:var(--text3);margin-bottom:12px">Friday, May 8 · Private</div>
+          <textarea class="journal-textarea" placeholder="Start writing... this space is entirely yours.">Today was harder than I expected. The mock test results came in and I'm three ranks below where I need to be. It's hard not to spiral, but I keep remembering what Priya said — one test doesn't define the trajectory...</textarea>
+          <div class="journal-toolbar">
+            <div class="jt-mood">
+              <span class="mood-mini">😔</span>
+              <span class="mood-mini" style="opacity:1;transform:scale(1.2)">😐</span>
+              <span class="mood-mini">🙂</span>
+              <span class="mood-mini">😊</span>
+            </div>
+            <button class="btn-primary" style="font-size:13px;padding:8px 18px">Save entry</button>
+          </div>
+        </div>
+        <div class="ai-reflection" style="margin-top:16px">
+          <div class="ar-label">✦ AI Journal Prompt for today</div>
+          <div class="ar-text">What's one thing you did well today, however small it was?</div>
+        </div>
+      </div>
+      <div id="dtab-reflections" style="display:none">
+        <div class="dash-greeting"><h2>AI Reflections</h2><p>Post-session summaries — private, non-diagnostic, and generated by Gemini AI.</p></div>
+        <div style="background:var(--warm-light);border:1px solid #E8C89C;border-radius:var(--radius-sm);padding:12px 16px;font-size:13px;color:#7A5530;margin-bottom:20px">These reflections are generated by AI to help you journal — they are not clinical assessments or diagnoses.</div>
+        <div class="ai-reflection" style="margin-bottom:16px">
+          <div class="ar-label">✦ Session with Rohan K. — May 3</div>
+          <div class="ar-text">Themes of perfectionism and external validation surfaced repeatedly. You described comparing yourself to peers often. There's a compassionate curiosity worth exploring: what would your standards look like if they came from within?</div>
+          <div class="ar-prompts"><div class="ar-prompt">Journal this theme</div><div class="ar-prompt">Set one gentle goal</div></div>
+        </div>
+        <div class="ai-reflection">
+          <div class="ar-label">✦ Session with Anjali S. — Apr 28</div>
+          <div class="ar-text">You spoke about feeling disconnected from your old friendships since coming to college. Grief for who you were before is real and valid. Loneliness in new environments is remarkably common among first-year students.</div>
+          <div class="ar-prompts"><div class="ar-prompt">Explore this in journal</div><div class="ar-prompt">Reach out to one person</div></div>
+        </div>
+      </div>
+      <div id="dtab-resources" style="display:none">
+        <div class="dash-greeting"><h2>Resources</h2><p>Support beyond Solace — professional and crisis resources.</p></div>
+        <div class="safety-banner"><strong>Crisis support:</strong> If you're in immediate distress, please reach out to iCall (9152987821) or Vandrevala Foundation (1860-2662-345).</div>
+        <div class="steps-grid" style="grid-template-columns:repeat(2,1fr)">
+          <div class="step-card"><div style="font-size:24px;margin-bottom:12px">📞</div><h3>iCall</h3><p>Professional psychosocial support. Mon–Sat 8am–10pm. <strong>9152987821</strong></p></div>
+          <div class="step-card"><div style="font-size:24px;margin-bottom:12px">🌍</div><h3>Vandrevala Foundation</h3><p>24/7 mental health helpline. Multilingual. <strong>1860-2662-345</strong></p></div>
+          <div class="step-card"><div style="font-size:24px;margin-bottom:12px">🏥</div><h3>NIMHANS</h3><p>National mental health resource. Helpline: <strong>080-46110007</strong></p></div>
+          <div class="step-card"><div style="font-size:24px;margin-bottom:12px">📚</div><h3>University Counselor</h3><p>Check if your institution has a free student counseling center.</p></div>
+        </div>
+      </div>
+      <div id="dtab-settings" style="display:none">
+        <div class="dash-greeting"><h2>Settings</h2><p>Manage your account and preferences.</p></div>
+        <div class="booking-card">
+          <div class="booking-section-title">Profile</div>
+          <div style="display:flex;flex-direction:column;gap:14px">
+            <div><div style="font-size:13px;color:var(--text3);margin-bottom:6px">Display name (shown to listeners)</div><input type="text" value="Nidhi" style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:var(--radius-sm);font-family:var(--sans);font-size:14px;background:var(--surface)"></div>
+            <div><div style="font-size:13px;color:var(--text3);margin-bottom:6px">Email (private)</div><input type="email" value="nidhi@example.com" style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:var(--radius-sm);font-family:var(--sans);font-size:14px;background:var(--surface)"></div>
+            <button class="btn-primary" style="width:fit-content">Save changes</button>
+          </div>
+        </div>
+        <div class="booking-card" style="margin-top:12px">
+          <div class="booking-section-title">Privacy & Data</div>
+          <p style="font-size:14px;color:var(--text2);margin-bottom:14px">Your journal entries are encrypted. Session details are anonymized. Listeners cannot see your real name.</p>
+          <button class="btn-secondary" style="font-size:14px;color:#D14545;border-color:#D14545">Request data deletion</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== LISTENER DASHBOARD ==================== -->
+<div class="page" id="page-listener-dash">
+  <div class="dash-layout">
+    <div class="dash-sidebar">
+      <div style="padding:0 16px 24px;border-bottom:1px solid var(--border);margin-bottom:8px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="avatar av-teal" style="width:40px;height:40px">P</div>
+          <div>
+            <div style="font-weight:500;font-size:14px">Priya M.</div>
+            <div style="font-size:12px;color:var(--accent)">● Active Listener</div>
+          </div>
+        </div>
+      </div>
+      <div class="dash-nav-item active">🏠 Overview</div>
+      <div class="dash-nav-item">📅 My Schedule</div>
+      <div class="dash-nav-item">👥 Session History</div>
+      <div class="dash-nav-item">📊 Earnings</div>
+      <div class="dash-nav-item">⚙️ Availability</div>
+      <div class="dash-nav-item">👤 My Profile</div>
+    </div>
+    <div class="dash-main">
+      <div class="dash-greeting"><h2>Good evening, Priya 🌱</h2><p>You have 3 sessions scheduled this weekend.</p></div>
+      <div class="earnings-card">
+        <div class="ec-amount">₹4,830</div>
+        <div class="ec-period">Earned this month</div>
+        <div class="ec-row">
+          <div class="ec-stat"><div class="ec-stat-val">23</div><div class="ec-stat-label">Sessions this month</div></div>
+          <div class="ec-stat"><div class="ec-stat-val">4.9 ★</div><div class="ec-stat-label">Average rating</div></div>
+          <div class="ec-stat"><div class="ec-stat-val">186</div><div class="ec-stat-label">Total sessions</div></div>
+        </div>
+      </div>
+      <div class="booking-card">
+        <div class="booking-section-title">This week's schedule</div>
+        <div class="schedule-grid" id="sched-grid"></div>
+      </div>
+      <div class="booking-card">
+        <div class="booking-section-title">Upcoming sessions</div>
+        <div class="session-list">
+          <div class="sl-item"><div class="sl-time">Sat 12:00 PM</div><div class="sl-user"><div class="sl-user-name">N*** (anonymous)</div><div class="sl-session-type">Quick Vent · 25 min</div></div><span class="sl-status status-confirmed">Confirmed</span></div>
+          <div class="sl-item"><div class="sl-time">Sun 10:30 AM</div><div class="sl-user"><div class="sl-user-name">Nidhi</div><div class="sl-session-type">Deep Conversation · 50 min</div></div><span class="sl-status status-confirmed">Confirmed</span></div>
+          <div class="sl-item"><div class="sl-time">Sun 3:00 PM</div><div class="sl-user"><div class="sl-user-name">A*** (anonymous)</div><div class="sl-session-type">Reflection Session · 40 min</div></div><span class="sl-status status-pending">Pending</span></div>
+        </div>
+      </div>
+      <div class="booking-card" style="background:var(--warm-light);border-color:#E8C89C">
+        <div class="ar-label" style="color:var(--warm)">🌸 Listener Wellbeing Reminder</div>
+        <p style="font-size:14px;color:#7A5530;margin-top:8px">You've done 5 sessions this week. Remember to check in with yourself. Listener burnout is real — you cannot pour from an empty cup. Consider taking a rest day this Sunday.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== ADMIN DASHBOARD ==================== -->
+<div class="page" id="page-admin-dash">
+  <div class="dash-layout">
+    <div class="dash-sidebar">
+      <div style="padding:0 16px 24px;border-bottom:1px solid var(--border);margin-bottom:8px">
+        <div style="font-weight:500;font-size:14px">Admin Panel</div>
+        <div style="font-size:12px;color:var(--text3)">Full access</div>
+      </div>
+      <div class="dash-nav-item active" onclick="switchAdminTab('overview',this)">📊 Overview</div>
+      <div class="dash-nav-item" onclick="switchAdminTab('users',this)">👥 Manage Users</div>
+      <div class="dash-nav-item" onclick="switchAdminTab('listeners',this)">🎧 Listener Approvals</div>
+      <div class="dash-nav-item" onclick="switchAdminTab('reports',this)">🚩 Reports</div>
+      <div class="dash-nav-item" onclick="switchAdminTab('payments',this)">💳 Payments</div>
+      <div class="dash-nav-item" onclick="switchAdminTab('safety',this)">🛡️ Safety</div>
+    </div>
+    <div class="dash-main">
+      <div id="atab-overview">
+        <div class="dash-greeting"><h2>Platform Overview</h2><p>May 2025 — Live data</p></div>
+        <div class="admin-grid">
+          <div class="admin-stat"><div class="as-icon">👥</div><div class="as-val">1,284</div><div class="as-label">Total students</div></div>
+          <div class="admin-stat"><div class="as-icon">🎧</div><div class="as-val">48</div><div class="as-label">Active listeners</div></div>
+          <div class="admin-stat"><div class="as-icon">📅</div><div class="as-val">312</div><div class="as-label">Sessions this month</div></div>
+          <div class="admin-stat"><div class="as-icon">💰</div><div class="as-val">₹89,400</div><div class="as-label">Revenue this month</div></div>
+        </div>
+        <div class="data-table">
+          <div class="dt-header"><div class="dt-title">Recent sessions</div></div>
+          <table>
+            <thead><tr><th>Student</th><th>Listener</th><th>Type</th><th>Date</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td>Nidhi K.</td><td>Priya M.</td><td>Deep Convo</td><td>May 11</td><td><span class="status-badge sb-active">Confirmed</span></td></tr>
+              <tr><td>Anon.</td><td>Rohan K.</td><td>Quick Vent</td><td>May 10</td><td><span class="status-badge sb-active">Confirmed</span></td></tr>
+              <tr><td>Aryan S.</td><td>Anjali S.</td><td>Reflection</td><td>May 10</td><td><span class="status-badge sb-pending">Pending</span></td></tr>
+              <tr><td>Meera P.</td><td>Auto-matched</td><td>Quick Vent</td><td>May 8</td><td><span class="status-badge sb-active">Completed</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div id="atab-users" style="display:none">
+        <div class="dash-greeting"><h2>Manage Users</h2></div>
+        <div class="data-table">
+          <div class="dt-header"><div class="dt-title">All students</div><input type="text" placeholder="Search users..." style="padding:7px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;font-family:var(--sans)"></div>
+          <table>
+            <thead><tr><th>Name</th><th>Email</th><th>Sessions</th><th>Joined</th><th>Status</th><th>Action</th></tr></thead>
+            <tbody>
+              <tr><td>Nidhi K.</td><td>nidhi@ex.com</td><td>7</td><td>Mar 2025</td><td><span class="status-badge sb-active">Active</span></td><td><button class="approve-btn">View</button></td></tr>
+              <tr><td>Aryan S.</td><td>aryan@ex.com</td><td>3</td><td>Apr 2025</td><td><span class="status-badge sb-active">Active</span></td><td><button class="approve-btn">View</button></td></tr>
+              <tr><td>Anonymous</td><td>hidden</td><td>1</td><td>May 2025</td><td><span class="status-badge sb-active">Active</span></td><td><button class="approve-btn">View</button></td></tr>
+              <tr><td>User #412</td><td>hidden</td><td>0</td><td>May 2025</td><td><span class="status-badge sb-flagged">Flagged</span></td><td><button class="review-btn">Review</button></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div id="atab-listeners" style="display:none">
+        <div class="dash-greeting"><h2>Listener Approvals</h2><p>Review and approve new listener applications.</p></div>
+        <div class="data-table">
+          <div class="dt-header"><div class="dt-title">Pending applications (3)</div></div>
+          <table>
+            <thead><tr><th>Applicant</th><th>University</th><th>Program</th><th>Training</th><th>Action</th></tr></thead>
+            <tbody>
+              <tr><td>Kavya R.</td><td>IIT Delhi</td><td>Psychology</td><td><span class="status-badge sb-active">Complete</span></td><td><div style="display:flex;gap:8px"><button class="approve-btn">Approve</button><button class="review-btn">Reject</button></div></td></tr>
+              <tr><td>Vikram S.</td><td>BITS Pilani</td><td>Sociology</td><td><span class="status-badge sb-pending">In progress</span></td><td><button class="review-btn">Review</button></td></tr>
+              <tr><td>Tanvi M.</td><td>Pune Univ.</td><td>Counselling</td><td><span class="status-badge sb-active">Complete</span></td><td><div style="display:flex;gap:8px"><button class="approve-btn">Approve</button><button class="review-btn">Reject</button></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div id="atab-reports" style="display:none">
+        <div class="dash-greeting"><h2>Reports & Moderation</h2></div>
+        <div class="safety-banner"><strong>Safeguarding:</strong> All flagged reports are reviewed by admin within 24 hours. Reports involving immediate risk are escalated immediately.</div>
+        <div class="data-table">
+          <div class="dt-header"><div class="dt-title">Flagged reports (2)</div></div>
+          <table>
+            <thead><tr><th>ID</th><th>Type</th><th>Reported by</th><th>Date</th><th>Status</th><th>Action</th></tr></thead>
+            <tbody>
+              <tr><td>#R-041</td><td>Listener conduct</td><td>User #312</td><td>May 7</td><td><span class="status-badge sb-pending">Under review</span></td><td><button class="review-btn">Investigate</button></td></tr>
+              <tr><td>#R-039</td><td>Safety concern</td><td>Listener</td><td>May 5</td><td><span class="status-badge sb-flagged">Escalated</span></td><td><button class="review-btn">View</button></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div id="atab-payments" style="display:none">
+        <div class="dash-greeting"><h2>Payments</h2></div>
+        <div class="admin-grid" style="grid-template-columns:repeat(3,1fr)">
+          <div class="admin-stat"><div class="as-val">₹89,400</div><div class="as-label">Total revenue (May)</div></div>
+          <div class="admin-stat"><div class="as-val">₹61,800</div><div class="as-label">Listener payouts</div></div>
+          <div class="admin-stat"><div class="as-val">₹27,600</div><div class="as-label">Platform share</div></div>
+        </div>
+        <div class="data-table">
+          <div class="dt-header"><div class="dt-title">Recent transactions</div></div>
+          <table>
+            <thead><tr><th>ID</th><th>User</th><th>Amount</th><th>Session</th><th>Date</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td>RZP-8821</td><td>Nidhi K.</td><td>₹368</td><td>Deep Convo</td><td>May 10</td><td><span class="status-badge sb-active">Paid</span></td></tr>
+              <tr><td>RZP-8820</td><td>Anon.</td><td>₹218</td><td>Quick Vent</td><td>May 10</td><td><span class="status-badge sb-active">Paid</span></td></tr>
+              <tr><td>RZP-8819</td><td>Aryan S.</td><td>₹318</td><td>Reflection</td><td>May 9</td><td><span class="status-badge sb-pending">Pending</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div id="atab-safety" style="display:none">
+        <div class="dash-greeting"><h2>Safety & Content Policy</h2></div>
+        <div class="safety-banner"><strong>Platform policy:</strong> Solace is not a mental health service. Any listener who provides diagnostic, clinical, or medical advice will be immediately suspended. All crisis situations must be referred to professional services.</div>
+        <div class="steps-grid" style="grid-template-columns:repeat(2,1fr)">
+          <div class="step-card"><div style="font-size:24px;margin-bottom:12px">🛡️</div><h3>Safeguarding Protocol</h3><p>Listeners report safety concerns → Admin reviews within 2 hours → Emergency services notified if required.</p></div>
+          <div class="step-card"><div style="font-size:24px;margin-bottom:12px">📋</div><h3>AI Output Review</h3><p>Gemini-generated reflections are filtered through a content moderation layer to prevent any diagnostic language.</p></div>
+          <div class="step-card"><div style="font-size:24px;margin-bottom:12px">🔒</div><h3>Data Protection</h3><p>All journals are client-side encrypted. Session metadata is anonymized after 90 days. DPDP Act compliant.</p></div>
+          <div class="step-card"><div style="font-size:24px;margin-bottom:12px">📞</div><h3>Crisis Referral</h3><p>Listeners are trained to identify crisis situations and immediately provide iCall and Vandrevala Foundation contacts.</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="script.js" defer></script>
+</body>
+</html>
