@@ -38,10 +38,14 @@ export const AuthProvider = ({ children }) => {
     checkUser();
 
     // Listen for changes on auth state (logged in, signed out, etc.)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       setUser(session?.user ?? null);
+      
       if (session?.user) {
-        await fetchRole(session.user.id);
+        // Only fetch role if we don't have it or if it's a login event
+        if (!userRole || event === 'SIGNED_IN') {
+          await fetchRole(session.user.id);
+        }
       } else {
         setUserRole(null);
       }
@@ -49,16 +53,18 @@ export const AuthProvider = ({ children }) => {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [userRole]);
 
   const login = async (email, password) => {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw error;
+    // The onAuthStateChange listener will handle the role fetching
     return data;
   };
 
   const logout = async () => {
     await supabase.auth.signOut();
+    setUser(null);
     setUserRole(null);
     router.push('/login');
   };

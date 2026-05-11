@@ -20,10 +20,9 @@ export default function LoginPage() {
     setLoading(true);
     
     try {
-      const authData = await login(email, password);
-
-      // Check role
-      const { data: profile } = await supabase.from('users').select('role').eq('id', authData.user.id).single();
+      const { user } = await login(email, password);
+      
+      const { data: profile } = await supabase.from('users').select('role').eq('id', user.id).single();
       
       if (profile?.role === 'admin') {
         router.push('/admin/dashboard');

@@ -19,6 +19,13 @@ export default function Footer() {
             <a href="#">Become a Listener</a>
           </div>
           <div className="footer-col">
+            <h5>Resources</h5>
+            <a href="/terms">Terms of Service</a>
+            <a href="/privacy">Privacy Policy</a>
+            <a href="/refund-policy">Refund Policy</a>
+            <a href="/contact">Contact Us</a>
+          </div>
+          <div className="footer-col">
             <h5>Crisis Resources</h5>
             <a href="tel:9152987821">iCall: 9152987821</a>
             <a href="tel:18602662345">Vandrevala: 1860-2662-345</a>
