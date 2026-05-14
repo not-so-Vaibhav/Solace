@@ -15,7 +15,7 @@ export default function Footer() {
           <div className="footer-col">
             <h5>Platform</h5>
             <a href="/booking">Book a Session</a>
-            <a href="#">Our Listeners</a>
+            <a href="/listeners">Our Listeners</a>
             <a href="#">Become a Listener</a>
           </div>
           <div className="footer-col">
@@ -33,7 +33,7 @@ export default function Footer() {
           </div>
         </div>
         <div className="footer-bottom">
-          <span>© 2025 Solace Peer Support. Not a medical service.</span>
+          <span>© 2026 Solace Peer Support. Not a medical service.</span>
           <span>Made with care in India 🇮🇳</span>
         </div>
       </div>

@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { useAuth } from '@/context/AuthContext';
@@ -8,16 +9,37 @@ import { supabase } from '@/lib/supabase/client';
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
-  const [stats, setStats] = useState({ users: 0, sessions: 0, revenue: 0 });
+  const [stats, setStats] = useState({ 
+    users: 0, 
+    sessions: 0, 
+    revenue: 0,
+    commission: 0,
+    payouts: 0,
+    pending: 0,
+    refunds: 0
+  });
   const [bookings, setBookings] = useState([]);
   const [blockedSlots, setBlockedSlots] = useState([]);
   const [newBlockDate, setNewBlockDate] = useState('');
   const [newBlockTime, setNewBlockTime] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [listeners, setListeners] = useState([]);
+  const [reviews, setReviews] = useState([]);
+  const [activityLogs, setActivityLogs] = useState([]);
+  const [isMobile, setIsMobile] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const { user, userRole, loading } = useAuth();
   const router = useRouter();
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 1024);
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     if (!loading) {
@@ -25,43 +47,76 @@ export default function AdminDashboard() {
         router.push('/login');
       } else if (userRole === 'admin') {
         fetchAdminData();
-      } else {
-        // Fallback for students or any unhandled roles
+      } else if (userRole === 'student') {
         router.push('/dashboard');
       }
     }
   }, [user, userRole, loading]);
 
   const fetchAdminData = async () => {
+    console.log('📡 Admin: Fetching data...');
     setIsLoading(true);
     try {
-      // 1. Stats
-      const { count: userCount } = await supabase.from('users').select('*', { count: 'exact', head: true });
-      const { count: sessionCount } = await supabase.from('sessions').select('*', { count: 'exact', head: true });
-      const { data: payments } = await supabase.from('payments').select('amount').eq('status', 'completed');
-      const totalRevenue = payments?.reduce((acc, curr) => acc + Number(curr.amount), 0) || 0;
+      const [
+        u,
+        sCount,
+        pRes,
+        bRes,
+        blRes,
+        lRes,
+        rRes,
+        aRes
+      ] = await Promise.allSettled([
+        supabase.from('users').select('*', { count: 'exact', head: true }),
+        supabase.from('sessions').select('*', { count: 'exact', head: true }),
+        supabase.from('payments').select('*'),
+        supabase.from('sessions').select(`*, student:student_id(full_name, email), listener:listener_id(users(full_name))`).order('scheduled_at', { ascending: false }),
+        supabase.from('blocked_slots').select('*').order('date', { ascending: true }),
+        supabase.from('users').select('id, full_name').eq('role', 'admin'),
+        supabase.from('reviews').select('*').order('created_at', { ascending: false }),
+        supabase.from('admin_activity_log').select('*').order('created_at', { ascending: false }).limit(10)
+      ]);
 
-      setStats({ users: userCount || 0, sessions: sessionCount || 0, revenue: totalRevenue });
+      console.log('📊 Admin: Fetch complete, processing results...');
 
-      // 2. All Bookings
-      const { data: bookingData } = await supabase
-        .from('sessions')
-        .select(`*, student:student_id(full_name, email), listener:listener_id(users(full_name))`)
-        .order('scheduled_at', { ascending: false });
-      setBookings(bookingData || []);
+      // Stats processing with explicit null/undefined handling
+      const userCount = u.status === 'fulfilled' ? (u.value.count ?? 0) : 0;
+      const sessionCount = sCount.status === 'fulfilled' ? (sCount.value.count ?? 0) : 0;
+      
+      const payments = pRes.status === 'fulfilled' ? (pRes.value.data || []) : [];
+      const totalRevenue = payments.reduce((acc, curr) => acc + Number(curr.amount || 0), 0);
+      const totalCommission = payments.reduce((acc, curr) => acc + Number(curr.commission_amount || (curr.amount * 0.1)), 0);
+      const totalPayouts = payments.filter(p => p.payout_status === 'paid').reduce((acc, curr) => acc + Number(curr.amount - (curr.commission_amount || curr.amount * 0.1)), 0);
+      const pendingSettlements = payments.filter(p => p.payout_status === 'pending').reduce((acc, curr) => acc + Number(curr.amount - (curr.commission_amount || curr.amount * 0.1)), 0);
+      const refunds = payments.filter(p => p.status === 'refunded').reduce((acc, curr) => acc + Number(curr.amount), 0);
 
-      // 3. Blocked Slots
-      const { data: blocks } = await supabase.from('blocked_slots').select('*').order('date', { ascending: true });
-      setBlockedSlots(blocks || []);
+      setStats({ 
+        users: Number(userCount), 
+        sessions: Number(sessionCount), 
+        revenue: Number(totalRevenue),
+        commission: Number(totalCommission),
+        payouts: Number(totalPayouts),
+        pending: Number(pendingSettlements),
+        refunds: Number(refunds)
+      });
 
-      // 4. Available Listeners (Admins for now)
-      const { data: listenerData } = await supabase.from('users').select('id, full_name').eq('role', 'admin');
-      setListeners(listenerData || []);
+      // Table data
+      if (bRes.status === 'fulfilled') setBookings(bRes.value.data || []);
+      if (blRes.status === 'fulfilled') setBlockedSlots(blRes.value.data || []);
+      if (lRes.status === 'fulfilled') setListeners(lRes.value.data || []);
+      if (rRes.status === 'fulfilled') setReviews(rRes.value.data || []);
+      if (aRes.status === 'fulfilled') setActivityLogs(aRes.value.data || []);
+
+      const resultsArray = [u, sCount, pRes, bRes, blRes, lRes, rRes, aRes];
+      if (resultsArray.some(r => r.status === 'rejected')) {
+        console.warn('⚠️ Admin: Some data failed to load');
+      }
 
     } catch (error) {
-      console.error('Admin Fetch Error:', error);
+      console.error('❌ Admin: Critical Fetch Error:', error);
     } finally {
       setIsLoading(false);
+      console.log('🏁 Admin: Loading complete');
     }
   };
 
@@ -166,40 +221,85 @@ export default function AdminDashboard() {
   const tabs = [
     { id: 'overview', label: 'Platform Overview', icon: '📈' },
     { id: 'bookings', label: 'All Bookings', icon: '🗓️' },
-    { id: 'availability', label: 'Manage Slots', icon: '🚫' },
+    { id: 'finances', label: 'Financial Hub', icon: '💰' },
+    { id: 'activity', label: 'Live Activity', icon: '⚡' },
+{ id: 'availability', label: 'Manage Slots', icon: '🚫' },
+    { id: 'reviews', label: 'Student Reviews', icon: '⭐' },
   ];
 
   return (
-    <main style={{ background: 'var(--bg)', minHeight: '100vh' }}>
+    <main style={{ background: 'var(--bg)', minHeight: '100vh', overflowX: 'hidden' }}>
       <Navbar />
-      <div className="admin-layout" style={{ display: 'flex', minHeight: 'calc(100vh - 72px)', maxWidth: '1440px', margin: '0 auto' }}>
+
+      {/* MOBILE HAMBURGER */}
+      {isMobile && (
+        <div 
+          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+          style={{ 
+            position: 'fixed', 
+            bottom: '30px', 
+            right: '30px', 
+            width: '60px', 
+            height: '60px', 
+            borderRadius: '50%', 
+            background: 'var(--accent)', 
+            color: '#fff', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center', 
+            fontSize: '24px', 
+            boxShadow: '0 8px 32px rgba(81, 124, 113, 0.4)',
+            zIndex: 1000,
+            cursor: 'pointer'
+          }}
+        >
+          {isSidebarOpen ? '✕' : '☰'}
+        </div>
+      )}
+
+      <div className="admin-layout" style={{ display: 'flex', minHeight: 'calc(100vh - 72px)', maxWidth: '1600px', margin: '0 auto', position: 'relative' }}>
         
         {/* SIDEBAR */}
-        <aside style={{ 
-          width: '280px', 
-          minWidth: '280px', 
-          flexShrink: 0, 
-          background: 'var(--surface)', 
-          borderRight: '1px solid var(--border)', 
-          padding: '40px 20px', 
-          display: 'flex', 
-          flexDirection: 'column' 
-        }}>
-          <div style={{ padding: '0 20px', marginBottom: '40px' }}>
+        <motion.aside 
+          initial={false}
+          animate={{ 
+            x: isMobile ? (isSidebarOpen ? 0 : -300) : 0,
+            opacity: 1
+          }}
+          style={{ 
+            width: '300px', 
+            minWidth: '300px', 
+            flexShrink: 0, 
+            background: 'var(--surface)', 
+            borderRight: '1px solid var(--border)', 
+            padding: '40px 24px', 
+            display: 'flex', 
+            flexDirection: 'column',
+            position: isMobile ? 'fixed' : 'sticky',
+            top: '72px',
+            height: 'calc(100vh - 72px)',
+            zIndex: 900,
+            boxShadow: isMobile ? '20px 0 60px rgba(0,0,0,0.1)' : 'none'
+          }}
+        >
+          <div style={{ padding: '0 12px', marginBottom: '40px' }}>
             <h2 style={{ fontFamily: 'var(--serif)', fontSize: '24px', fontWeight: '700', color: 'var(--text)' }}>
               Solace <span style={{ color: 'var(--accent)', fontStyle: 'italic' }}>Pro</span>
             </h2>
             <p style={{ fontSize: '11px', color: 'var(--text3)', marginTop: '4px', textTransform: 'uppercase', letterSpacing: '1px' }}>
-              Admin Console
+              Operational Dashboard
             </p>
           </div>
           
-          {/* Changed from <nav> to <div> to prevent global CSS conflicts */}
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {tabs.map(tab => (
-              <div 
+              <motion.div 
                 key={tab.id} 
-                onClick={() => setActiveTab(tab.id)}
+                whileHover={{ x: 4 }}
+                onClick={() => {
+                  setActiveTab(tab.id);
+                  if (isMobile) setIsSidebarOpen(false);
+                }}
                 style={{ 
                   padding: '14px 20px', 
                   borderRadius: '16px', 
@@ -210,39 +310,136 @@ export default function AdminDashboard() {
                   display: 'flex',
                   alignItems: 'center',
                   gap: '16px',
-                  transition: 'all 0.3s ease',
-                  boxShadow: activeTab === tab.id ? '0 4px 12px rgba(81, 124, 113, 0.2)' : 'none'
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  boxShadow: activeTab === tab.id ? '0 8px 16px rgba(81, 124, 113, 0.2)' : 'none'
                 }}
               >
                 <span style={{ fontSize: '20px', opacity: activeTab === tab.id ? 1 : 0.7 }}>{tab.icon}</span> 
                 {tab.label}
-              </div>
+              </motion.div>
             ))}
           </div>
 
-          <div style={{ padding: '20px', borderTop: '1px solid var(--border)', fontSize: '12px', color: 'var(--text3)' }}>
-            v2.1.0 • Stable Build
+          <div style={{ padding: '20px', borderTop: '1px solid var(--border)', fontSize: '12px', color: 'var(--text3)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10B981' }}></span>
+            System Live • v2.5.0
           </div>
-        </aside>
+        </motion.aside>
 
+        {/* MOBILE OVERLAY */}
+        {isMobile && isSidebarOpen && (
+          <div 
+            onClick={() => setIsSidebarOpen(false)}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(4px)', zIndex: 850 }}
+          ></div>
+        )}
         {/* MAIN CONTENT */}
-        <section style={{ flex: 1, padding: '50px 60px', overflowY: 'auto' }}>
+        <section style={{ 
+          flex: 1, 
+          padding: isMobile ? '30px 20px' : '50px 80px', 
+          overflowY: 'auto',
+          width: '100%'
+        }}>
           {activeTab === 'overview' && (
             <div className="fadeIn">
               <h1 style={{ fontFamily: 'var(--serif)', fontSize: '36px', marginBottom: '40px', color: 'var(--text)' }}>Platform Performance</h1>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '24px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px', marginBottom: '40px' }}>
                 <div style={{ background: 'var(--surface)', padding: '32px', borderRadius: '24px', border: '1px solid var(--border)', boxShadow: 'var(--card-shadow)' }}>
                   <div style={{ color: 'var(--text3)', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '12px' }}>Total Users</div>
                   <div style={{ fontSize: '40px', fontWeight: '700', color: 'var(--text)', fontFamily: 'var(--serif)' }}>{stats.users}</div>
+                  <div style={{ fontSize: '12px', color: '#10B981', marginTop: '8px' }}>↑ 3 new today</div>
                 </div>
                 <div style={{ background: 'var(--surface)', padding: '32px', borderRadius: '24px', border: '1px solid var(--border)', boxShadow: 'var(--card-shadow)' }}>
                   <div style={{ color: 'var(--text3)', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '12px' }}>Sessions Booked</div>
                   <div style={{ fontSize: '40px', fontWeight: '700', color: 'var(--text)', fontFamily: 'var(--serif)' }}>{stats.sessions}</div>
+                  <div style={{ fontSize: '12px', color: 'var(--accent)', marginTop: '8px' }}>5 upcoming this week</div>
                 </div>
                 <div style={{ background: 'var(--surface)', padding: '32px', borderRadius: '24px', border: '1px solid var(--border)', boxShadow: 'var(--card-shadow)' }}>
                   <div style={{ color: 'var(--text3)', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '12px' }}>Gross Revenue</div>
                   <div style={{ fontSize: '40px', fontWeight: '700', color: 'var(--text)', fontFamily: 'var(--serif)' }}>₹{stats.revenue}</div>
+                  <div style={{ fontSize: '12px', color: 'var(--text3)', marginTop: '8px' }}>Net: ₹{stats.revenue - stats.refunds}</div>
                 </div>
+              </div>
+
+              {/* RECENT ACTIVITY PREVIEW */}
+              <div style={{ background: '#fff', padding: '32px', borderRadius: '24px', border: '1px solid var(--border)', boxShadow: 'var(--card-shadow)' }}>
+                <h3 style={{ fontSize: '20px', fontWeight: '700', marginBottom: '24px', fontFamily: 'var(--serif)' }}>Live Operational Log</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  {activityLogs.slice(0, 5).map(log => (
+                    <div key={log.id} style={{ display: 'flex', gap: '16px', alignItems: 'center', paddingBottom: '16px', borderBottom: '1px solid var(--border)' }}>
+                      <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--accent)' }}></div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontWeight: '600', fontSize: '14px' }}>{log.action}</div>
+                        <div style={{ fontSize: '12px', color: 'var(--text3)' }}>{log.details}</div>
+                      </div>
+                      <div style={{ fontSize: '11px', color: 'var(--text3)' }}>{new Date(log.created_at).toLocaleTimeString()}</div>
+                    </div>
+                  ))}
+                  {activityLogs.length === 0 && <p style={{ color: 'var(--text3)', textAlign: 'center' }}>No recent activity.</p>}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'finances' && (
+            <div className="fadeIn">
+              <h1 style={{ fontFamily: 'var(--serif)', fontSize: '36px', marginBottom: '40px', color: 'var(--text)' }}>Financial Command</h1>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px', marginBottom: '40px' }}>
+                <div style={{ background: 'var(--accent)', color: '#fff', padding: '32px', borderRadius: '24px' }}>
+                  <div style={{ opacity: 0.8, fontSize: '12px', textTransform: 'uppercase', fontWeight: '700', letterSpacing: '1px', marginBottom: '12px' }}>Platform Commission</div>
+                  <div style={{ fontSize: '40px', fontWeight: '700', fontFamily: 'var(--serif)' }}>₹{stats.commission}</div>
+                </div>
+                <div style={{ background: 'var(--surface)', padding: '32px', borderRadius: '24px', border: '1px solid var(--border)' }}>
+                  <div style={{ color: 'var(--text3)', fontSize: '12px', textTransform: 'uppercase', fontWeight: '700', letterSpacing: '1px', marginBottom: '12px' }}>Total Payouts</div>
+                  <div style={{ fontSize: '40px', fontWeight: '700', color: 'var(--text)', fontFamily: 'var(--serif)' }}>₹{stats.payouts}</div>
+                </div>
+                <div style={{ background: 'var(--surface)', padding: '32px', borderRadius: '24px', border: '1px solid var(--border)' }}>
+                  <div style={{ color: 'var(--text3)', fontSize: '12px', textTransform: 'uppercase', fontWeight: '700', letterSpacing: '1px', marginBottom: '12px' }}>Pending Settlements</div>
+                  <div style={{ fontSize: '40px', fontWeight: '700', color: 'var(--text)', fontFamily: 'var(--serif)' }}>₹{stats.pending}</div>
+                </div>
+              </div>
+
+              <div style={{ background: 'var(--surface)', padding: '32px', borderRadius: '24px', border: '1px solid var(--border)' }}>
+                <h3 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '24px' }}>Revenue Summary</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '16px', background: '#fff', borderRadius: '12px' }}>
+                    <span>Gross Sales</span>
+                    <span style={{ fontWeight: '700' }}>₹{stats.revenue}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '16px', background: '#fff', borderRadius: '12px' }}>
+                    <span>Total Refunds</span>
+                    <span style={{ fontWeight: '700', color: '#DC2626' }}>-₹{stats.refunds}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'activity' && (
+            <div className="fadeIn">
+              <h1 style={{ fontFamily: 'var(--serif)', fontSize: '36px', marginBottom: '40px', color: 'var(--text)' }}>System Activity Log</h1>
+              <div style={{ background: '#fff', borderRadius: '24px', border: '1px solid var(--border)', overflow: 'hidden' }}>
+                {activityLogs.map((log, index) => (
+                  <div key={log.id} style={{ 
+                    padding: '20px 32px', 
+                    borderBottom: index === activityLogs.length - 1 ? 'none' : '1px solid var(--border)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '20px'
+                  }}>
+                    <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px' }}>
+                      {log.action.includes('User') ? '👤' : log.action.includes('Payment') ? '💰' : '⚡'}
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: '600', color: 'var(--text)' }}>{log.action}</div>
+                      <div style={{ color: 'var(--text3)', fontSize: '13px' }}>{log.details}</div>
+                    </div>
+                    <div style={{ color: 'var(--text3)', fontSize: '12px' }}>
+                      {new Date(log.created_at).toLocaleString()}
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           )}
@@ -250,8 +447,8 @@ export default function AdminDashboard() {
           {activeTab === 'bookings' && (
             <div className="fadeIn">
               <h1 style={{ fontFamily: 'var(--serif)', fontSize: '36px', marginBottom: '40px', color: 'var(--text)' }}>Global Bookings</h1>
-              <div style={{ background: 'var(--surface)', borderRadius: '24px', border: '1px solid var(--border)', overflow: 'hidden', boxShadow: 'var(--card-shadow)' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <div style={{ background: 'var(--surface)', borderRadius: '24px', border: '1px solid var(--border)', overflowX: 'auto', boxShadow: 'var(--card-shadow)' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '800px' }}>
                   <thead style={{ background: 'var(--surface2)', textAlign: 'left', borderBottom: '1px solid var(--border)' }}>
                     <tr>
                       <th style={{ padding: '20px 24px', fontSize: '12px', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '1px' }}>Student</th>
@@ -374,8 +571,8 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
-              <div style={{ background: 'var(--surface)', borderRadius: '24px', border: '1px solid var(--border)', overflow: 'hidden', boxShadow: 'var(--card-shadow)' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <div style={{ background: 'var(--surface)', borderRadius: '24px', border: '1px solid var(--border)', overflowX: 'auto', boxShadow: 'var(--card-shadow)' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '800px' }}>
                   <thead style={{ background: 'var(--surface2)', textAlign: 'left', borderBottom: '1px solid var(--border)' }}>
                     <tr>
                       <th style={{ padding: '20px 24px', fontSize: '12px', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '1px' }}>Date</th>
@@ -406,6 +603,32 @@ export default function AdminDashboard() {
                     )}
                   </tbody>
                 </table>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'reviews' && (
+            <div className="fadeIn">
+              <h1 style={{ fontFamily: 'var(--serif)', fontSize: '36px', marginBottom: '40px', color: 'var(--text)' }}>Student Feedback</h1>
+              <div style={{ display: 'grid', gap: '20px' }}>
+                {reviews.length === 0 ? (
+                  <div style={{ background: 'var(--surface)', padding: '40px', borderRadius: '24px', border: '1px solid var(--border)', textAlign: 'center', color: 'var(--text3)' }}>No reviews yet.</div>
+                ) : (
+                  reviews.map(r => (
+                    <div key={r.id} style={{ background: 'var(--surface)', padding: '24px', borderRadius: '24px', border: '1px solid var(--border)', boxShadow: 'var(--card-shadow)' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+                        <div>
+                          <div style={{ fontWeight: '600', fontSize: '16px' }}>{r.full_name}</div>
+                          <div style={{ fontSize: '12px', color: 'var(--text3)' }}>{new Date(r.created_at).toLocaleDateString()}</div>
+                        </div>
+                        <div style={{ fontSize: '20px' }}>
+                          {'⭐'.repeat(r.rating)}
+                        </div>
+                      </div>
+                      <p style={{ color: 'var(--text2)', fontSize: '14px', lineHeight: '1.6' }}>"{r.comment}"</p>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           )}

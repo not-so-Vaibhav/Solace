@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Navbar from '@/components/layout/Navbar';
 import { useAuth } from '@/context/AuthContext';
@@ -11,8 +11,18 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const { login, user, userRole, loading: authLoading } = useAuth();
   const router = useRouter();
+
+  useEffect(() => {
+    if (user && userRole && !authLoading) {
+      if (userRole === 'admin') {
+        router.push('/admin/dashboard');
+      } else {
+        router.push('/dashboard');
+      }
+    }
+  }, [user, userRole, authLoading, router]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -20,18 +30,10 @@ export default function LoginPage() {
     setLoading(true);
     
     try {
-      const { user } = await login(email, password);
-      
-      const { data: profile } = await supabase.from('users').select('role').eq('id', user.id).single();
-      
-      if (profile?.role === 'admin') {
-        router.push('/admin/dashboard');
-      } else {
-        router.push('/dashboard');
-      }
+      await login(email, password);
+      // The useEffect above will handle the redirection once userRole is loaded
     } catch (err) {
       setError(err.message);
-    } finally {
       setLoading(false);
     }
   };

@@ -7,7 +7,7 @@ export default function StaticLayout({ title, children }) {
       <Navbar />
       <section style={{ 
         padding: '120px 5% 80px', 
-        maxWidth: '800px', 
+        maxWidth: '1000px', 
         margin: '0 auto',
         minHeight: '70vh'
       }}>

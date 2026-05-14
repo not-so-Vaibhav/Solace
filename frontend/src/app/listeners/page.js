@@ -2,36 +2,70 @@
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import Link from 'next/link';
+import { motion } from 'framer-motion';
+
+const fadeInUp = {
+  initial: { opacity: 0, y: 20 },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] }
+};
+
+const staggerContainer = {
+  animate: {
+    transition: {
+      staggerChildren: 0.1
+    }
+  }
+};
 
 export default function ListenersPage() {
   return (
     <main style={{ background: 'var(--bg)', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <Navbar />
       
-      <section style={{ padding: '60px 5%', flex: 1, maxWidth: '1200px', margin: '0 auto', width: '100%' }}>
+      <motion.section 
+        style={{ padding: '60px 5%', flex: 1, maxWidth: '1200px', margin: '0 auto', width: '100%' }}
+        initial="initial"
+        animate="animate"
+        variants={staggerContainer}
+      >
         <div style={{ textAlign: 'center', marginBottom: '60px' }}>
-          <span style={{ color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '2px', fontSize: '12px', fontWeight: '600' }}>
+          <motion.span 
+            variants={fadeInUp}
+            style={{ color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '2px', fontSize: '12px', fontWeight: '600', display: 'block' }}
+          >
             The Voices of Solace
-          </span>
-          <h1 style={{ fontFamily: 'var(--serif)', fontSize: 'clamp(32px, 5vw, 56px)', color: 'var(--text)', marginTop: '16px', marginBottom: '20px' }}>
+          </motion.span>
+          <motion.h1 
+            variants={fadeInUp}
+            style={{ fontFamily: 'var(--serif)', fontSize: 'clamp(32px, 5vw, 56px)', color: 'var(--text)', marginTop: '16px', marginBottom: '20px' }}
+          >
             Meet our Listeners
-          </h1>
-          <p style={{ color: 'var(--text2)', fontSize: 'clamp(16px, 2vw, 18px)', maxWidth: '600px', margin: '0 auto', lineHeight: '1.6' }}>
+          </motion.h1>
+          <motion.p 
+            variants={fadeInUp}
+            style={{ color: 'var(--text2)', fontSize: 'clamp(16px, 2vw, 18px)', maxWidth: '600px', margin: '0 auto', lineHeight: '1.6' }}
+          >
             Real students who have been in your shoes. Compassionate, non-judgmental, and here to provide the safe space you deserve.
-          </p>
+          </motion.p>
         </div>
 
         {/* FOUNDER SPOTLIGHT */}
-        <div style={{ 
-          background: 'var(--surface)', 
-          borderRadius: '32px', 
-          border: '1px solid var(--border)', 
-          boxShadow: 'var(--card-shadow)',
-          overflow: 'hidden',
-          display: 'flex',
-          flexDirection: 'column',
-          position: 'relative'
-        }}>
+        <motion.div 
+          variants={fadeInUp}
+          style={{ 
+            background: 'var(--surface)', 
+            borderRadius: '32px', 
+            border: '1px solid var(--border)', 
+            boxShadow: 'var(--card-shadow)',
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column',
+            position: 'relative'
+          }}
+          whileHover={{ y: -5, boxShadow: 'var(--card-shadow-hover)' }}
+          transition={{ duration: 0.3 }}
+        >
           
           <div style={{ 
             background: 'var(--accent)', 
@@ -66,20 +100,31 @@ export default function ListenersPage() {
               position: 'relative',
               borderRight: '1px solid var(--border)'
             }}>
-              <div style={{ 
-                width: '100%', 
-                maxWidth: '240px', 
-                aspectRatio: '1', 
-                borderRadius: '50%', 
-                background: 'linear-gradient(135deg, var(--accent-light) 0%, var(--surface) 100%)',
-                border: '1px solid var(--border)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: 'inset 0 4px 20px rgba(81, 124, 113, 0.1)'
-              }}>
+              <motion.div 
+                style={{ 
+                  width: '100%', 
+                  maxWidth: '240px', 
+                  aspectRatio: '1', 
+                  borderRadius: '50%', 
+                  background: 'linear-gradient(135deg, var(--accent-light) 0%, var(--surface) 100%)',
+                  border: '1px solid var(--border)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: 'inset 0 4px 20px rgba(81, 124, 113, 0.1)'
+                }}
+                animate={{ 
+                  y: [0, -10, 0],
+                  scale: [1, 1.02, 1]
+                }}
+                transition={{ 
+                  duration: 4, 
+                  repeat: Infinity, 
+                  ease: "easeInOut" 
+                }}
+              >
                 <span style={{ fontSize: 'clamp(60px, 10vw, 100px)' }}>👨‍💻</span>
-              </div>
+              </motion.div>
             </div>
 
             {/* Content Side */}
@@ -104,50 +149,62 @@ export default function ListenersPage() {
               </blockquote>
 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '32px' }}>
-                <div>
+                <motion.div variants={staggerContainer} initial="initial" whileInView="animate" viewport={{ once: true }}>
                   <h3 style={{ fontSize: '12px', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '16px', fontWeight: '600' }}>
                     Comfort Areas
                   </h3>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                     {['Academic Burnout', 'Overthinking', 'Loneliness', 'Career Pressure'].map(area => (
-                      <span key={area} style={{ 
-                        background: 'var(--bg)', 
-                        border: '1px solid var(--border)', 
-                        padding: '6px 14px', 
-                        borderRadius: '50px', 
-                        fontSize: '12px', 
-                        color: 'var(--text2)' 
-                      }}>
+                      <motion.span 
+                        key={area} 
+                        variants={fadeInUp}
+                        whileHover={{ scale: 1.05, background: 'var(--accent-light)', color: 'var(--accent)' }}
+                        style={{ 
+                          background: 'var(--bg)', 
+                          border: '1px solid var(--border)', 
+                          padding: '6px 14px', 
+                          borderRadius: '50px', 
+                          fontSize: '12px', 
+                          color: 'var(--text2)',
+                          cursor: 'default'
+                        }}
+                      >
                         {area}
-                      </span>
+                      </motion.span>
                     ))}
                   </div>
-                </div>
+                </motion.div>
 
-                <div>
+                <motion.div variants={staggerContainer} initial="initial" whileInView="animate" viewport={{ once: true }}>
                   <h3 style={{ fontSize: '12px', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '16px', fontWeight: '600' }}>
                     Conversation Style
                   </h3>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                     {['Calm', 'Reflective', 'Non-judgmental'].map(style => (
-                      <span key={style} style={{ 
-                        background: 'var(--accent-light)', 
-                        color: 'var(--accent)',
-                        border: '1px solid rgba(81, 124, 113, 0.2)', 
-                        padding: '6px 14px', 
-                        borderRadius: '50px', 
-                        fontSize: '12px',
-                        fontWeight: '500'
-                      }}>
+                      <motion.span 
+                        key={style} 
+                        variants={fadeInUp}
+                        whileHover={{ scale: 1.05, y: -2 }}
+                        style={{ 
+                          background: 'var(--accent-light)', 
+                          color: 'var(--accent)',
+                          border: '1px solid rgba(81, 124, 113, 0.2)', 
+                          padding: '6px 14px', 
+                          borderRadius: '50px', 
+                          fontSize: '12px',
+                          fontWeight: '500',
+                          cursor: 'default'
+                        }}
+                      >
                         {style}
-                      </span>
+                      </motion.span>
                     ))}
                   </div>
-                </div>
+                </motion.div>
               </div>
 
-              <div style={{ marginTop: '40px' }}>
-                <Link href="/booking">
+              <motion.div style={{ marginTop: '40px' }} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                <Link href="/booking" style={{ textDecoration: 'none' }}>
                   <button style={{ 
                     background: 'var(--text)', 
                     color: '#fff', 
@@ -159,31 +216,38 @@ export default function ListenersPage() {
                     cursor: 'pointer',
                     width: '100%',
                     maxWidth: '300px',
-                    transition: 'transform 0.3s'
+                    transition: 'background 0.3s'
                   }}
-                  onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
-                  onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                  onMouseOver={(e) => e.currentTarget.style.background = '#333'}
+                  onMouseOut={(e) => e.currentTarget.style.background = 'var(--text)'}
                   >
                     Book a session with Vaibhav
                   </button>
                 </Link>
-              </div>
+              </motion.div>
 
             </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* INFORMATIONAL SEGMENTS */}
         <div style={{ marginTop: '80px', display: 'flex', flexDirection: 'column', gap: '60px' }}>
           
           {/* Why Solace Exists */}
-          <div className="responsive-segment" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))', gap: '24px', alignItems: 'start' }}>
-            <div>
+          <motion.div 
+            className="responsive-segment" 
+            style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))', gap: '24px', alignItems: 'start' }}
+            initial="initial"
+            whileInView="animate"
+            viewport={{ once: true, margin: "-100px" }}
+            variants={staggerContainer}
+          >
+            <motion.div variants={fadeInUp}>
               <h2 style={{ fontFamily: 'var(--serif)', fontSize: 'clamp(24px, 4vw, 32px)', color: 'var(--text)', borderBottom: '2px solid var(--accent)', paddingBottom: '12px', display: 'inline-block' }}>
                 Why Solace Exists
               </h2>
-            </div>
-            <div style={{ color: 'var(--text2)', fontSize: 'clamp(15px, 2vw, 17px)', lineHeight: '1.8' }}>
+            </motion.div>
+            <motion.div variants={fadeInUp} style={{ color: 'var(--text2)', fontSize: 'clamp(15px, 2vw, 17px)', lineHeight: '1.8' }}>
               <p style={{ marginBottom: '16px' }}>
                 College life can become emotionally overwhelming in ways people rarely talk about openly.
               </p>
@@ -199,17 +263,24 @@ export default function ListenersPage() {
               <p style={{ fontWeight: '500', color: 'var(--text)' }}>
                 Solace exists to make those conversations more accessible, private, and human.
               </p>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
 
           {/* How Listening Works */}
-          <div className="responsive-segment" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))', gap: '24px', alignItems: 'start' }}>
-            <div>
+          <motion.div 
+            className="responsive-segment" 
+            style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))', gap: '24px', alignItems: 'start' }}
+            initial="initial"
+            whileInView="animate"
+            viewport={{ once: true, margin: "-100px" }}
+            variants={staggerContainer}
+          >
+            <motion.div variants={fadeInUp}>
               <h2 style={{ fontFamily: 'var(--serif)', fontSize: 'clamp(24px, 4vw, 32px)', color: 'var(--text)', borderBottom: '2px solid var(--accent)', paddingBottom: '12px', display: 'inline-block' }}>
                 How Listening Works
               </h2>
-            </div>
-            <div style={{ color: 'var(--text2)', fontSize: 'clamp(15px, 2vw, 17px)', lineHeight: '1.8' }}>
+            </motion.div>
+            <motion.div variants={fadeInUp} style={{ color: 'var(--text2)', fontSize: 'clamp(15px, 2vw, 17px)', lineHeight: '1.8' }}>
               <p style={{ marginBottom: '16px', fontWeight: '500', color: 'var(--text)' }}>
                 Solace is a peer support platform — not a therapy or medical service.
               </p>
@@ -225,59 +296,79 @@ export default function ListenersPage() {
                   'Public-space guidelines for all in-person conversations',
                   'Flexible formats including chat, Google Meet, and campus conversations'
                 ].map((item, i) => (
-                  <li key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: '10px' }}>
+                  <motion.li 
+                    key={i} 
+                    variants={fadeInUp}
+                    style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: '10px' }}
+                  >
                     <span style={{ color: 'var(--accent)', fontSize: '18px', lineHeight: '1.4' }}>•</span>
                     <span>{item}</span>
-                  </li>
+                  </motion.li>
                 ))}
               </ul>
               <p style={{ fontWeight: '500', color: 'var(--text)', fontStyle: 'italic' }}>
                 The goal is simple: help students feel heard, lighter, and less alone.
               </p>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
 
           {/* What We Value */}
-          <div className="responsive-segment" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))', gap: '24px', alignItems: 'start' }}>
-            <div>
+          <motion.div 
+            className="responsive-segment" 
+            style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))', gap: '24px', alignItems: 'start' }}
+            initial="initial"
+            whileInView="animate"
+            viewport={{ once: true, margin: "-100px" }}
+            variants={staggerContainer}
+          >
+            <motion.div variants={fadeInUp}>
               <h2 style={{ fontFamily: 'var(--serif)', fontSize: 'clamp(24px, 4vw, 32px)', color: 'var(--text)', borderBottom: '2px solid var(--accent)', paddingBottom: '12px', display: 'inline-block' }}>
                 What We Value
               </h2>
-            </div>
-            <div style={{ color: 'var(--text2)', fontSize: 'clamp(15px, 2vw, 17px)', lineHeight: '1.8' }}>
+            </motion.div>
+            <motion.div variants={fadeInUp} style={{ color: 'var(--text2)', fontSize: 'clamp(15px, 2vw, 17px)', lineHeight: '1.8' }}>
               <p style={{ marginBottom: '20px' }}>
                 Every conversation on Solace should feel emotionally safe and respectful. Our listeners are expected to approach conversations with:
               </p>
               
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '12px', marginBottom: '24px' }}>
+              <motion.div 
+                style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '12px', marginBottom: '24px' }}
+                variants={staggerContainer}
+              >
                 {[
                   'Empathy', 'Active listening', 'Calmness and patience',
                   'Confidentiality', 'Non-judgment', 'Respect for boundaries'
                 ].map(value => (
-                  <div key={value} style={{ 
-                    background: 'var(--surface)', 
-                    border: '1px solid var(--border)', 
-                    padding: '12px 16px', 
-                    borderRadius: '12px',
-                    fontWeight: '500',
-                    color: 'var(--text)',
-                    fontSize: '14px',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.02)'
-                  }}>
+                  <motion.div 
+                    key={value} 
+                    variants={fadeInUp}
+                    whileHover={{ scale: 1.05, borderColor: 'var(--accent)', color: 'var(--accent)' }}
+                    style={{ 
+                      background: 'var(--surface)', 
+                      border: '1px solid var(--border)', 
+                      padding: '12px 16px', 
+                      borderRadius: '12px',
+                      fontWeight: '500',
+                      color: 'var(--text)',
+                      fontSize: '14px',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
+                      transition: 'border-color 0.2s, color 0.2s'
+                    }}
+                  >
                     {value}
-                  </div>
+                  </motion.div>
                 ))}
-              </div>
+              </motion.div>
 
               <p style={{ fontWeight: '600', color: 'var(--accent)', fontSize: 'clamp(17px, 3vw, 20px)', fontFamily: 'var(--serif)' }}>
                 We believe meaningful support starts with simply being present and listening well.
               </p>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
 
         </div>
 
-      </section>
+      </motion.section>
       
       <Footer />
 
