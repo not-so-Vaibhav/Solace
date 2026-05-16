@@ -36,13 +36,19 @@ export default function BookingPage() {
   const router = useRouter();
   const platformFee = 19;
 
-  useEffect(() => {
-    // Load Razorpay Script
-    const script = document.createElement('script');
-    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-    script.async = true;
-    document.body.appendChild(script);
-  }, []);
+  const loadRazorpayScript = () => {
+    return new Promise((resolve) => {
+      if (window.Razorpay) {
+        resolve(true);
+        return;
+      }
+      const script = document.createElement('script');
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
 
   useEffect(() => {
     fetchBlockedSlots();
@@ -55,9 +61,9 @@ export default function BookingPage() {
   };
 
   const formats = [
-    { id: 'chat', label: 'Chat Session', icon: '💬', sub: 'Instant messaging support' },
-    { id: 'meet', label: 'Google Meet Session', icon: '📹', sub: 'Face-to-face video call' },
-    { id: 'inperson', label: 'In-Person Conversation', icon: '🤝', sub: 'Face-to-face on campus' },
+    { id: 'chat', label: 'Digital Wellness Guidance', icon: '📝', sub: 'Immediate text-based wellness support' },
+    { id: 'meet', label: 'Video Wellness Consultation', icon: '📹', sub: 'One-on-one virtual guidance' },
+    { id: 'inperson', label: 'On-Campus Guidance Session', icon: '🏛️', sub: 'In-person educational support' },
   ];
 
   const pricing = {
@@ -102,11 +108,21 @@ export default function BookingPage() {
 
     setIsProcessing(true);
     try {
+      // ENSURE RAZORPAY IS LOADED
+      const isLoaded = await loadRazorpayScript();
+      if (!isLoaded) {
+        alert('Failed to load payment gateway. Please check your internet connection.');
+        setIsProcessing(false);
+        return;
+      }
+
       const response = await fetch('/api/razorpay/order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ amount: total }),
       });
+      
+      if (!response.ok) throw new Error('Failed to create order');
       const order = await response.json();
 
       const options = {
@@ -114,7 +130,7 @@ export default function BookingPage() {
         amount: order.amount,
         currency: order.currency,
         name: 'Solace Platform',
-        description: `${durations.find(d => d.id === duration)?.label} Session`,
+        description: `${durations.find(d => d.id === duration)?.label} Guidance Session`,
         order_id: order.id,
         handler: async function (response) {
           try {
@@ -154,7 +170,7 @@ export default function BookingPage() {
 
               sendEmail({
                 to: user.email,
-                subject: 'Your Solace Session is Booked!',
+                subject: 'Your Solace Guidance Session is Booked!',
                 html: getBookingConfirmationTemplate(user.user_metadata?.full_name || 'Student', dateStr, timeStr, total)
               });
 

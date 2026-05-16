@@ -30,8 +30,24 @@ export default function LoginPage() {
     setLoading(true);
     
     try {
-      await login(email, password);
-      // The useEffect above will handle the redirection once userRole is loaded
+      const data = await login(email, password);
+      console.log('✅ Login successful, checking for immediate redirect...');
+      
+      // FALLBACK: If the useEffect is slow (mobile), try to redirect now
+      if (data?.user) {
+        // We wait a tiny bit for the AuthContext to potentially update userRole
+        setTimeout(async () => {
+          try {
+            const { data: profile } = await supabase.from('users').select('role').eq('id', data.user.id).single();
+            if (profile?.role) {
+              console.log('🚀 Immediate redirect triggered');
+              router.push(profile.role === 'admin' ? '/admin/dashboard' : '/dashboard');
+            }
+          } catch (err) {
+            console.warn('Immediate redirect check failed, relying on useEffect');
+          }
+        }, 800);
+      }
     } catch (err) {
       setError(err.message);
       setLoading(false);

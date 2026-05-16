@@ -137,15 +137,15 @@ export default function LandingPage() {
           animate="animate"
           variants={staggerContainer}
         >
-          <motion.div variants={fadeInUp} className="hero-badge">Peer Support, Not Therapy</motion.div>
-          <motion.h1 variants={fadeInUp}>You don't have to carry <em>everything</em> alone.</motion.h1>
-          <motion.p variants={fadeInUp} className="hero-sub">A calm, private space to talk with trained student listeners — whenever you're feeling overwhelmed, burnt out, or just need to be heard.</motion.p>
+          <motion.div variants={fadeInUp} className="hero-badge">Wellness Guidance & Student Support</motion.div>
+          <motion.h1 variants={fadeInUp}>Your journey to wellbeing, <em>simplified</em>.</motion.h1>
+          <motion.p variants={fadeInUp} className="hero-sub">A structured, private space for student wellness guidance and academic pressure management — available whenever you need a balanced perspective.</motion.p>
           <motion.div variants={fadeInUp} className="hero-btns">
             <Link href="/booking" className="btn-primary" style={{ textDecoration: 'none' }}>Book a Session</Link>
             <button className="btn-secondary" onClick={scrollToHow}>How it works ↓</button>
           </motion.div>
           <motion.div variants={fadeInUp} className="hero-disclaimer" style={{ marginTop: '24px' }}>
-            Solace is not a licensed therapy service. We are peer supporters, not medical or mental health professionals.
+            Solace provides wellbeing guidance and educational support. We are not a medical or licensed mental health service.
           </motion.div>
         </motion.div>
 
@@ -327,9 +327,9 @@ export default function LandingPage() {
           viewport={{ once: true, margin: "-100px" }}
         >
           {[
-            { num: 1, title: 'Choose your session', desc: 'Pick the type of conversation that feels right — a quick vent, a deeper talk, or a guided reflection.' },
-            { num: 2, title: 'Pick a time that works', desc: 'Browse real-time availability. Sessions happen on Google Meet — no extra downloads needed.' },
-            { num: 3, title: 'Talk. Reflect. Continue.', desc: 'After your session, receive a private AI reflection to help you process your thoughts. Everything stays private.' }
+            { num: 1, title: 'Select your guidance', desc: 'Pick the format of support that suits your needs — a quick check-in, an in-depth guidance session, or a structured reflection.' },
+            { num: 2, title: 'Schedule your session', desc: 'Browse available slots with our student guides. All sessions are conducted via secure video links.' },
+            { num: 3, title: 'Review and Grow', desc: 'After your session, receive a private summary of your wellness insights to help you track your progress.' }
           ].map((step, i) => (
             <motion.div 
               key={i} 

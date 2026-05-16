@@ -41,6 +41,8 @@ export default function UserDashboard() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [profileName, setProfileName] = useState('');
+  const [notifications, setNotifications] = useState({ session_reminders: true, reflection_emails: true });
   
   const { user, userRole, loading, logout } = useAuth(); // Added logout
   const router = useRouter();
@@ -76,7 +78,14 @@ export default function UserDashboard() {
         .eq('id', user.id)
         .single();
       
-      if (profileData) setProfile(profileData);
+      if (profileData) {
+        setProfile(profileData);
+        setProfileName(profileData.full_name || '');
+        setNotifications({
+          session_reminders: profileData.session_reminders ?? true,
+          reflection_emails: profileData.reflection_emails ?? true
+        });
+      }
       if (profileError) console.warn('Profile fetch note:', profileError.message);
 
       // Fetch everything else in parallel to maximize speed
@@ -243,6 +252,46 @@ export default function UserDashboard() {
       await fetchDashboardData();
     } catch (err) {
       alert(`Update failed: ${err.message}`);
+    }
+  };
+
+  const handleUpdateProfile = async () => {
+    if (!profileName.trim()) return;
+    try {
+      setIsSaving(true);
+      const { error } = await supabase
+        .from('users')
+        .update({ full_name: profileName })
+        .eq('id', user.id);
+      
+      if (error) throw error;
+      
+      // Update local state
+      setProfile(prev => ({ ...prev, full_name: profileName }));
+      alert('Profile updated successfully!');
+    } catch (err) {
+      console.error('Update profile error:', err);
+      alert(`Failed to update profile: ${err.message}`);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleToggleNotification = async (type) => {
+    const newValue = !notifications[type];
+    setNotifications(prev => ({ ...prev, [type]: newValue }));
+    
+    try {
+      const { error } = await supabase
+        .from('users')
+        .update({ [type]: newValue })
+        .eq('id', user.id);
+      
+      if (error) throw error;
+    } catch (err) {
+      console.error('Toggle notification error:', err);
+      // Rollback on error
+      setNotifications(prev => ({ ...prev, [type]: !newValue }));
     }
   };
 
@@ -988,7 +1037,13 @@ export default function UserDashboard() {
 
                     <div className="input-group">
                       <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', marginBottom: '8px', color: 'var(--text3)' }}>FULL NAME</label>
-                      <input type="text" className="login-input" defaultValue={profile?.full_name || user?.user_metadata?.full_name} style={{ background: '#fff' }} />
+                      <input 
+                        type="text" 
+                        className="login-input" 
+                        value={profileName} 
+                        onChange={(e) => setProfileName(e.target.value)}
+                        style={{ background: '#fff' }} 
+                      />
                     </div>
                     <div className="input-group" style={{ marginTop: '20px' }}>
                       <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', marginBottom: '8px', color: 'var(--text3)' }}>EMAIL ADDRESS</label>
@@ -998,9 +1053,13 @@ export default function UserDashboard() {
                       <motion.button 
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
+                        onClick={handleUpdateProfile}
+                        disabled={isSaving}
                         className="btn-primary" 
                         style={{ padding: '12px 24px', width: 'auto' }}
-                      >Update Profile</motion.button>
+                      >
+                        {isSaving ? 'Updating...' : 'Update Profile'}
+                      </motion.button>
                       
                       {userRole === 'admin' && (
                         <motion.button 
@@ -1023,14 +1082,24 @@ export default function UserDashboard() {
                           <div style={{ fontSize: '14px', fontWeight: '500', color: 'var(--text)' }}>Session Reminders</div>
                           <div style={{ fontSize: '12px', color: 'var(--text3)' }}>Get notified 15 minutes before your sessions.</div>
                         </div>
-                        <input type="checkbox" defaultChecked style={{ width: '20px', height: '20px', accentColor: 'var(--accent)' }} />
+                        <input 
+                          type="checkbox" 
+                          checked={notifications.session_reminders} 
+                          onChange={() => handleToggleNotification('session_reminders')}
+                          style={{ width: '20px', height: '20px', accentColor: 'var(--accent)' }} 
+                        />
                       </label>
                       <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', paddingTop: '16px', borderTop: '1px solid var(--border)' }}>
                         <div>
                           <div style={{ fontSize: '14px', fontWeight: '500', color: 'var(--text)' }}>Reflection Emails</div>
                           <div style={{ fontSize: '12px', color: 'var(--text3)' }}>Receive your AI reflections via email.</div>
                         </div>
-                        <input type="checkbox" defaultChecked style={{ width: '20px', height: '20px', accentColor: 'var(--accent)' }} />
+                        <input 
+                          type="checkbox" 
+                          checked={notifications.reflection_emails} 
+                          onChange={() => handleToggleNotification('reflection_emails')}
+                          style={{ width: '20px', height: '20px', accentColor: 'var(--accent)' }} 
+                        />
                       </label>
                     </div>
                   </motion.div>
