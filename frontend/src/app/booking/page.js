@@ -32,9 +32,15 @@ export default function BookingPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [blockedSlots, setBlockedSlots] = useState([]);
 
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const router = useRouter();
   const platformFee = 19;
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/login');
+    }
+  }, [user, loading, router]);
 
   // Inline PayForge payment state
   const [qrCodeUrl, setQrCodeUrl]       = useState(null);
