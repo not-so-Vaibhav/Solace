@@ -26,6 +26,16 @@ export default function AdminDashboard() {
   const [listeners, setListeners] = useState([]);
   const [reviews, setReviews] = useState([]);
   const [activityLogs, setActivityLogs] = useState([]);
+  const [students, setStudents] = useState([]);
+  const [showManualBooking, setShowManualBooking] = useState(false);
+  const [manualBooking, setManualBooking] = useState({
+    student_id: '',
+    listener_id: '',
+    date: '',
+    time: '',
+    format: 'Video Call',
+    duration: 30
+  });
   const [isMobile, setIsMobile] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
@@ -65,16 +75,18 @@ export default function AdminDashboard() {
         blRes,
         lRes,
         rRes,
-        aRes
+        aRes,
+        stuRes
       ] = await Promise.allSettled([
         supabase.from('users').select('*', { count: 'exact', head: true }),
         supabase.from('sessions').select('*', { count: 'exact', head: true }),
         supabase.from('payments').select('*'),
-        supabase.from('sessions').select(`*, student:student_id(full_name, email), listener:listener_id(users(full_name))`).order('scheduled_at', { ascending: false }),
+        supabase.from('sessions').select(`*, student:student_id(full_name, email), listener:listener_id(full_name, email)`).order('scheduled_at', { ascending: false }),
         supabase.from('blocked_slots').select('*').order('date', { ascending: true }),
         supabase.from('users').select('id, full_name').eq('role', 'admin'),
         supabase.from('reviews').select('*').order('created_at', { ascending: false }),
-        supabase.from('admin_activity_log').select('*').order('created_at', { ascending: false }).limit(10)
+        supabase.from('admin_activity_log').select('*').order('created_at', { ascending: false }).limit(10),
+        supabase.from('users').select('id, full_name, email').eq('role', 'student')
       ]);
 
       console.log('📊 Admin: Fetch complete, processing results...');
@@ -106,8 +118,9 @@ export default function AdminDashboard() {
       if (lRes.status === 'fulfilled') setListeners(lRes.value.data || []);
       if (rRes.status === 'fulfilled') setReviews(rRes.value.data || []);
       if (aRes.status === 'fulfilled') setActivityLogs(aRes.value.data || []);
+      if (stuRes.status === 'fulfilled') setStudents(stuRes.value.data || []);
 
-      const resultsArray = [u, sCount, pRes, bRes, blRes, lRes, rRes, aRes];
+      const resultsArray = [u, sCount, pRes, bRes, blRes, lRes, rRes, aRes, stuRes];
       if (resultsArray.some(r => r.status === 'rejected')) {
         console.warn('⚠️ Admin: Some data failed to load');
       }
@@ -198,6 +211,35 @@ export default function AdminDashboard() {
       }
     } else {
       alert('Error cancelling session: ' + error.message);
+    }
+  };
+
+  const handleCreateManualBooking = async () => {
+    if (!manualBooking.student_id || !manualBooking.date || !manualBooking.time) {
+      return alert("Please select a student, date, and time.");
+    }
+    
+    // Combine date and time to ISO string
+    const scheduledAt = new Date(`${manualBooking.date}T${manualBooking.time}:00`).toISOString();
+    
+    const sessionData = {
+      student_id: manualBooking.student_id,
+      listener_id: manualBooking.listener_id || null,
+      scheduled_at: scheduledAt,
+      duration: manualBooking.duration,
+      format: manualBooking.format,
+      status: manualBooking.listener_id ? 'assigned' : 'confirmed', // confirmed means paid but waiting for listener
+      created_at: new Date().toISOString()
+    };
+
+    const { error } = await supabase.from('sessions').insert([sessionData]);
+    if (!error) {
+      alert("Manual booking created successfully!");
+      setShowManualBooking(false);
+      setManualBooking({ student_id: '', listener_id: '', date: '', time: '', format: 'Video Call', duration: 30 });
+      fetchAdminData();
+    } else {
+      alert("Failed to create booking: " + error.message);
     }
   };
 
@@ -446,7 +488,44 @@ export default function AdminDashboard() {
 
           {activeTab === 'bookings' && (
             <div className="fadeIn">
-              <h1 style={{ fontFamily: 'var(--serif)', fontSize: '36px', marginBottom: '40px', color: 'var(--text)' }}>Global Bookings</h1>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>
+                <h1 style={{ fontFamily: 'var(--serif)', fontSize: '36px', color: 'var(--text)', margin: 0 }}>Global Bookings</h1>
+                <button 
+                  onClick={() => setShowManualBooking(true)}
+                  style={{ background: 'var(--accent)', color: '#fff', border: 'none', padding: '12px 24px', borderRadius: '50px', cursor: 'pointer', fontWeight: '600' }}
+                >
+                  + Manual Booking
+                </button>
+              </div>
+
+              {showManualBooking && (
+                <div style={{ background: 'var(--surface)', padding: '24px', borderRadius: '24px', border: '1px solid var(--border)', marginBottom: '30px', animation: 'fadeIn 0.3s ease' }}>
+                  <h3 style={{ marginBottom: '20px', color: 'var(--text)' }}>Create Manual Booking</h3>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
+                    <select 
+                      value={manualBooking.student_id}
+                      onChange={e => setManualBooking({...manualBooking, student_id: e.target.value})}
+                      style={{ padding: '12px', borderRadius: '8px', border: '1px solid var(--border)', background: '#fff' }}
+                    >
+                      <option value="">Select Student...</option>
+                      {students.map(s => <option key={s.id} value={s.id}>{s.full_name} ({s.email})</option>)}
+                    </select>
+
+                    <input type="date" value={manualBooking.date} onChange={e => setManualBooking({...manualBooking, date: e.target.value})} style={{ padding: '12px', borderRadius: '8px', border: '1px solid var(--border)', background: '#fff' }} />
+                    <input type="time" value={manualBooking.time} onChange={e => setManualBooking({...manualBooking, time: e.target.value})} style={{ padding: '12px', borderRadius: '8px', border: '1px solid var(--border)', background: '#fff' }} />
+                    
+                    <select value={manualBooking.format} onChange={e => setManualBooking({...manualBooking, format: e.target.value})} style={{ padding: '12px', borderRadius: '8px', border: '1px solid var(--border)', background: '#fff' }}>
+                      <option value="Video Call">Video Call</option>
+                      <option value="Audio Call">Audio Call</option>
+                      <option value="Chat Session">Chat Session</option>
+                    </select>
+
+                    <button onClick={handleCreateManualBooking} style={{ background: 'var(--accent)', color: '#fff', border: 'none', padding: '12px', borderRadius: '8px', cursor: 'pointer', fontWeight: '600' }}>Save Booking</button>
+                    <button onClick={() => setShowManualBooking(false)} style={{ background: '#f3f4f6', color: 'var(--text)', border: 'none', padding: '12px', borderRadius: '8px', cursor: 'pointer', fontWeight: '600' }}>Cancel</button>
+                  </div>
+                </div>
+              )}
+
               <div style={{ background: 'var(--surface)', borderRadius: '24px', border: '1px solid var(--border)', overflowX: 'auto', boxShadow: 'var(--card-shadow)' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '800px' }}>
                   <thead style={{ background: 'var(--surface2)', textAlign: 'left', borderBottom: '1px solid var(--border)' }}>
@@ -468,17 +547,22 @@ export default function AdminDashboard() {
                             <div style={{ fontSize: '11px', color: 'var(--text3)', fontWeight: '400' }}>{b.format} • {b.duration}m</div>
                           </td>
                           <td style={{ padding: '20px 24px', color: 'var(--text2)' }}>
-                            {b.status === 'confirmed' ? (
+                            {b.listener_id && b.listener?.full_name ? (
+                              <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10B981', display: 'inline-block' }}></span>
+                                <strong style={{ fontSize: '13px', color: 'var(--text)' }}>{b.listener.full_name}</strong>
+                              </span>
+                            ) : b.status === 'confirmed' || b.status === 'booked' ? (
                               <select 
                                 onChange={(e) => handleAssignListener(b, e.target.value)}
-                                style={{ padding: '6px', borderRadius: '8px', border: '1px solid var(--border)', fontSize: '12px' }}
+                                style={{ padding: '6px 10px', borderRadius: '8px', border: '1px solid var(--border)', fontSize: '12px', background: '#fff', cursor: 'pointer' }}
                                 defaultValue=""
                               >
                                 <option value="" disabled>Assign Listener...</option>
                                 {listeners.map(l => <option key={l.id} value={l.id}>{l.full_name}</option>)}
                               </select>
                             ) : (
-                              b.listener?.users?.full_name || <span style={{ color: 'var(--text3)', fontStyle: 'italic' }}>Pending...</span>
+                              <span style={{ color: 'var(--text3)', fontStyle: 'italic', fontSize: '13px' }}>Pending...</span>
                             )}
                           </td>
                           <td style={{ padding: '20px 24px', color: 'var(--text2)' }}>

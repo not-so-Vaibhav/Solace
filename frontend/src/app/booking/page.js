@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Navbar from '../../components/layout/Navbar';
 import Footer from '../../components/layout/Footer';
 import { useAuth } from '@/context/AuthContext';
@@ -36,19 +36,78 @@ export default function BookingPage() {
   const router = useRouter();
   const platformFee = 19;
 
-  const loadRazorpayScript = () => {
-    return new Promise((resolve) => {
-      if (window.Razorpay) {
-        resolve(true);
-        return;
-      }
-      const script = document.createElement('script');
-      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-      script.onload = () => resolve(true);
-      script.onerror = () => resolve(false);
-      document.body.appendChild(script);
+  // Inline PayForge payment state
+  const [qrCodeUrl, setQrCodeUrl]       = useState(null);
+  const [upiVpa, setUpiVpa]             = useState(null);
+  const [upiLink, setUpiLink]           = useState(null);
+  const [pfOrderId, setPfOrderId]       = useState(null);
+  const [pfAmount, setPfAmount]         = useState(null);
+  const [pfExpiry, setPfExpiry]         = useState(null);
+  const [pfStatus, setPfStatus]         = useState('idle'); // idle | loading | ready | paid | expired | error
+  const pollRef = useRef(null);
+
+  const PAYFORGE_SERVER = 'https://payment-integration-system.onrender.com';
+  const ENTERPRISE_ID   = '5821271e-155e-4255-8331-e48163d5a1dc';
+
+  // Create order when user reaches Step 4
+  useEffect(() => {
+    if (step !== 4 || !user) return;
+    setPfStatus('loading');
+    setQrCodeUrl(null);
+    setPfOrderId(null);
+
+    fetch(`${PAYFORGE_SERVER}/api/orders/create`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name:          user?.user_metadata?.full_name || 'Student',
+        email:         user?.email || '',
+        phone:         '',
+        plan:          'Chat Session',
+        enterprise_id: ENTERPRISE_ID
+      })
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (!data.orderId) throw new Error(data.error || 'No orderId returned');
+      setPfOrderId(data.orderId);
+      setPfAmount(data.amount);
+      setPfExpiry(new Date(data.expiresAt));
+      setUpiVpa(data.upiVpa);
+      setUpiLink(data.upiLink);
+      setQrCodeUrl(`https://api.qrserver.com/v1/create-qr-code/?size=280x280&margin=10&data=${encodeURIComponent(data.upiLink)}`);
+      setPfStatus('ready');
+    })
+    .catch(err => {
+      console.error('[PayForge] Order create failed:', err);
+      setPfStatus('error');
     });
-  };
+
+    return () => { if (pollRef.current) clearInterval(pollRef.current); };
+  }, [step, user]);
+
+  // Poll for payment status every 3 seconds
+  useEffect(() => {
+    if (pfStatus !== 'ready' || !pfOrderId) return;
+    if (pollRef.current) clearInterval(pollRef.current);
+
+    pollRef.current = setInterval(async () => {
+      try {
+        const res  = await fetch(`${PAYFORGE_SERVER}/api/orders/${pfOrderId}`);
+        const data = await res.json();
+        if (data.order?.status === 'paid') {
+          clearInterval(pollRef.current);
+          setPfStatus('paid');
+          await handlePayment(pfOrderId);
+        } else if (data.order?.status === 'expired') {
+          clearInterval(pollRef.current);
+          setPfStatus('expired');
+        }
+      } catch (e) { console.warn('[PayForge] Poll error', e); }
+    }, 3000);
+
+    return () => clearInterval(pollRef.current);
+  }, [pfStatus, pfOrderId]);
 
   useEffect(() => {
     fetchBlockedSlots();
@@ -61,9 +120,9 @@ export default function BookingPage() {
   };
 
   const formats = [
-    { id: 'chat', label: 'Digital Wellness Guidance', icon: '📝', sub: 'Immediate text-based wellness support' },
-    { id: 'meet', label: 'Video Wellness Consultation', icon: '📹', sub: 'One-on-one virtual guidance' },
-    { id: 'inperson', label: 'On-Campus Guidance Session', icon: '🏛️', sub: 'In-person educational support' },
+    { id: 'chat', label: 'Chat Session', icon: '💬', sub: 'Instant messaging support' },
+    { id: 'meet', label: 'Google Meet Session', icon: '📹', sub: 'Face-to-face video call' },
+    { id: 'inperson', label: 'In-Person Conversation', icon: '🤝', sub: 'Face-to-face on campus' },
   ];
 
   const pricing = {
@@ -100,117 +159,64 @@ export default function BookingPage() {
   const subtotal = format && duration ? pricing[format][duration] : 0;
   const total = subtotal + platformFee;
 
-  const handlePayment = async () => {
-    if (!user) {
-      router.push('/login');
-      return;
-    }
-
+  const handlePayment = async (payforgeOrderId) => {
     setIsProcessing(true);
     try {
-      // ENSURE RAZORPAY IS LOADED
-      const isLoaded = await loadRazorpayScript();
-      if (!isLoaded) {
-        alert('Failed to load payment gateway. Please check your internet connection.');
-        setIsProcessing(false);
-        return;
+      const scheduledAt = new Date(selectedDate);
+      const [time, period] = selectedTime.split(' ');
+      let [hours, minutes] = time.split(':').map(Number);
+      if (period === 'PM' && hours !== 12) hours += 12;
+      if (period === 'AM' && hours === 12) hours = 0;
+      scheduledAt.setHours(hours, minutes, 0, 0);
+
+      const { data: session, error: sessionErr } = await supabase.from('sessions').insert([{
+        student_id: user.id,
+        listener_id: null,
+        format: format,
+        duration: duration === 'quick' ? 25 : 50,
+        scheduled_at: scheduledAt.toISOString(),
+        status: 'confirmed'
+      }]).select().single();
+
+      if (sessionErr) throw sessionErr;
+
+      const { error: paymentErr } = await supabase.from('payments').insert([{
+        user_id: user.id,
+        session_id: session.id,
+        provider: 'payforge',
+        provider_payment_id: payforgeOrderId,
+        amount: total,
+        status: 'completed'
+      }]);
+
+      if (paymentErr) throw paymentErr;
+
+      try {
+        const { sendEmail } = await import('@/lib/email-client');
+        const { getBookingConfirmationTemplate, getPaymentReceiptTemplate } = await import('@/lib/email-templates');
+        const dateStr = scheduledAt.toLocaleDateString();
+        const timeStr = scheduledAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        sendEmail({ to: user.email, subject: 'Your Solace Session is Booked!', html: getBookingConfirmationTemplate(user.user_metadata?.full_name || 'Student', dateStr, timeStr, total) });
+        sendEmail({ to: user.email, subject: 'Payment Receipt - Solace', html: getPaymentReceiptTemplate(user.user_metadata?.full_name || 'Student', total, payforgeOrderId) });
+      } catch (emailErr) {
+        console.error('Post-booking Email Error:', emailErr);
       }
 
-      const response = await fetch('/api/razorpay/order', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: total }),
-      });
-      
-      if (!response.ok) throw new Error('Failed to create order');
-      const order = await response.json();
-
-      const options = {
-        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
-        amount: order.amount,
-        currency: order.currency,
-        name: 'Solace Platform',
-        description: `${durations.find(d => d.id === duration)?.label} Guidance Session`,
-        order_id: order.id,
-        handler: async function (response) {
-          try {
-            const scheduledAt = new Date(selectedDate);
-            const [time, period] = selectedTime.split(' ');
-            let [hours, minutes] = time.split(':').map(Number);
-            if (period === 'PM' && hours !== 12) hours += 12;
-            if (period === 'AM' && hours === 12) hours = 0;
-            scheduledAt.setHours(hours, minutes, 0, 0);
-
-            const { data: session, error: sessionErr } = await supabase.from('sessions').insert([{
-              student_id: user.id,
-              listener_id: null,
-              format: format,
-              scheduled_at: scheduledAt.toISOString(),
-              status: 'booked',
-              duration: duration === 'quick' ? 25 : 50
-            }]).select().single();
-
-            if (sessionErr) throw sessionErr;
-
-            await supabase.from('payments').insert([{
-              user_id: user.id,
-              session_id: session.id,
-              amount: total,
-              provider: 'razorpay',
-              provider_payment_id: response.razorpay_payment_id,
-              status: 'completed'
-            }]);
-
-            try {
-              const { sendEmail } = await import('@/lib/email-client');
-              const { getBookingConfirmationTemplate, getPaymentReceiptTemplate } = await import('@/lib/email-templates');
-              
-              const dateStr = new Date(scheduledAt).toLocaleDateString();
-              const timeStr = new Date(scheduledAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-              sendEmail({
-                to: user.email,
-                subject: 'Your Solace Guidance Session is Booked!',
-                html: getBookingConfirmationTemplate(user.user_metadata?.full_name || 'Student', dateStr, timeStr, total)
-              });
-
-              sendEmail({
-                to: user.email,
-                subject: 'Payment Receipt - Solace',
-                html: getPaymentReceiptTemplate(user.user_metadata?.full_name || 'Student', total, response.razorpay_payment_id)
-              });
-            } catch (emailErr) {
-              console.error('Post-booking Email Error:', emailErr);
-            }
-
-            router.push('/dashboard');
-          } catch (err) {
-            console.error('CRITICAL Fulfillment Error:', err);
-            alert(`Payment successful, but we encountered an error: ${err.message || 'Unknown Error'}`);
-          }
-        },
-        prefill: {
-          name: user.user_metadata?.full_name || '',
-          email: user.email || '',
-        },
-        theme: { color: '#517C71' },
-      };
-
-      const rzp = new window.Razorpay(options);
-      rzp.open();
-    } catch (error) {
-      console.error('Payment Error:', error);
-      alert('Failed to initiate payment. Please try again.');
+      router.push('/dashboard');
+    } catch (err) {
+      console.error('CRITICAL Fulfillment Error:', JSON.stringify(err, null, 2));
+      alert(`Booking Error: ${err.message || JSON.stringify(err)}`);
     } finally {
       setIsProcessing(false);
     }
   };
 
   return (
-    <main>
-      <Navbar />
-      <motion.div 
-        className="booking-wrap" 
+    <>
+      <main>
+        <Navbar />
+        <motion.div 
+          className="booking-wrap" 
         style={{ minHeight: '80vh', padding: '60px 5%' }}
         initial="initial"
         animate="animate"
@@ -482,32 +488,92 @@ export default function BookingPage() {
                   </div>
                 </div>
 
-                <div className="payment-card" style={{ background: '#fff', padding: '40px', borderRadius: '24px', border: '1px solid var(--border)', textAlign: 'center' }}>
-                  <h4 style={{ textTransform: 'uppercase', fontSize: '12px', letterSpacing: '1px', color: 'var(--text3)', marginBottom: '16px' }}>Secure Payment via Razorpay</h4>
-                  <p style={{ fontSize: '13px', color: 'var(--text3)', marginBottom: '32px' }}>Your payment is processed securely. Sessions are non-refundable after 2 hours of booking.</p>
-                  
-                  <motion.button 
-                    className="btn-primary" 
-                    disabled={isProcessing}
-                    style={{ width: '100%', maxWidth: '500px', padding: '18px', fontSize: '16px', fontWeight: '600', height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                    onClick={handlePayment}
-                    whileHover={{ scale: 1.02, background: '#3D5F57' }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    {isProcessing ? (
-                      <motion.div 
-                        animate={{ rotate: 360 }} 
-                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                        style={{ border: '3px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', width: '24px', height: '24px' }}
-                      />
-                    ) : `Pay ₹${total} securely →`}
-                  </motion.button>
+                <div className="payment-card" style={{ background: '#fff', padding: '32px', borderRadius: '24px', border: '1px solid var(--border)', textAlign: 'center' }}>
+                  <h4 style={{ textTransform: 'uppercase', fontSize: '11px', letterSpacing: '1.5px', color: 'var(--text3)', marginBottom: '24px' }}>🔒 Secure Payment via PayForge</h4>
 
-                  <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', marginTop: '32px' }}>
-                    {['UPI', 'Cards', 'Net Banking', 'Wallets'].map(method => (
-                      <div key={method} style={{ fontSize: '10px', color: 'var(--text3)', padding: '6px 12px', border: '1px solid var(--border)', borderRadius: '6px' }}>{method}</div>
-                    ))}
-                  </div>
+                  {/* LOADING */}
+                  {pfStatus === 'loading' && (
+                    <div style={{ padding: '40px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
+                      <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                        style={{ border: '3px solid #E5E1DA', borderTopColor: '#517C71', borderRadius: '50%', width: '40px', height: '40px' }} />
+                      <p style={{ color: 'var(--text3)', fontSize: '14px' }}>Generating your payment QR…</p>
+                    </div>
+                  )}
+
+                  {/* ERROR */}
+                  {pfStatus === 'error' && (
+                    <div style={{ padding: '24px 0' }}>
+                      <p style={{ color: '#DC2626', marginBottom: '16px' }}>Failed to load payment. Please try again.</p>
+                      <button onClick={() => setStep(4)} style={{ background: '#517C71', color: '#fff', border: 'none', borderRadius: '50px', padding: '12px 28px', cursor: 'pointer', fontSize: '14px' }}>
+                        Retry
+                      </button>
+                    </div>
+                  )}
+
+                  {/* EXPIRED */}
+                  {pfStatus === 'expired' && (
+                    <div style={{ padding: '24px 0' }}>
+                      <p style={{ color: '#DC2626', marginBottom: '16px' }}>QR code has expired.</p>
+                      <button onClick={() => { setPfStatus('idle'); setTimeout(() => setStep(4), 50); }} style={{ background: '#517C71', color: '#fff', border: 'none', borderRadius: '50px', padding: '12px 28px', cursor: 'pointer', fontSize: '14px' }}>
+                        Generate New QR
+                      </button>
+                    </div>
+                  )}
+
+                  {/* PAID / PROCESSING */}
+                  {pfStatus === 'paid' && (
+                    <div style={{ padding: '32px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
+                      <div style={{ fontSize: '48px' }}>✅</div>
+                      <p style={{ fontWeight: '600', fontSize: '16px', color: '#059669' }}>Payment Verified!</p>
+                      <p style={{ color: 'var(--text3)', fontSize: '13px' }}>Saving your booking…</p>
+                    </div>
+                  )}
+
+                  {/* QR READY */}
+                  {pfStatus === 'ready' && qrCodeUrl && (
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px' }}>
+                      {/* QR Code */}
+                      <div style={{ padding: '16px', background: '#F7F5F2', borderRadius: '16px', border: '1px solid var(--border)', display: 'inline-block' }}>
+                        <img src={qrCodeUrl} alt="UPI QR Code" width={220} height={220} style={{ display: 'block', borderRadius: '8px' }} />
+                      </div>
+
+                      {/* UPI Details */}
+                      <div style={{ background: '#F0FDF4', border: '1px solid #BBF7D0', borderRadius: '12px', padding: '16px 24px', width: '100%', maxWidth: '340px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                          <span style={{ fontSize: '12px', color: 'var(--text3)' }}>UPI ID</span>
+                          <span style={{ fontSize: '13px', fontWeight: '600', fontFamily: 'monospace' }}>{upiVpa || '—'}</span>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <span style={{ fontSize: '12px', color: 'var(--text3)' }}>Amount</span>
+                          <span style={{ fontSize: '15px', fontWeight: '700', color: '#517C71' }}>₹{pfAmount || total}</span>
+                        </div>
+                      </div>
+
+                      <p style={{ fontSize: '12px', color: 'var(--text3)', lineHeight: '1.6' }}>
+                        Scan with any UPI app (GPay, PhonePe, Paytm, etc.)<br />
+                        Your booking confirms automatically after payment.
+                      </p>
+
+                      {/* Open in UPI App */}
+                      {upiLink && (
+                        <a href={upiLink} style={{ fontSize: '13px', color: '#517C71', fontWeight: '600', textDecoration: 'underline' }}>
+                          📱 Open in UPI App
+                        </a>
+                      )}
+
+                      {/* Live polling indicator */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: 'var(--text3)' }}>
+                        <motion.div animate={{ scale: [1, 1.3, 1] }} transition={{ duration: 1.5, repeat: Infinity }}
+                          style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#22C55E' }} />
+                        Listening for payment…
+                      </div>
+
+                      {/* Payment Support Helpline */}
+                      <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid var(--border)', width: '100%', fontSize: '12px', color: 'var(--text3)' }}>
+                        Facing any issues with the payment? Call us at <a href="tel:+919430698561" style={{ color: 'var(--accent)', fontWeight: '600', textDecoration: 'underline' }}>+91 94306 98561</a>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <button onClick={() => setStep(3)} style={{ background: 'none', border: 'none', color: 'var(--text3)', cursor: 'pointer', textDecoration: 'underline', fontSize: '14px' }}>← Back</button>
@@ -529,5 +595,6 @@ export default function BookingPage() {
         .date-strip { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
     </main>
+    </>
   );
 }

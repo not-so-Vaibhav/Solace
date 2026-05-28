@@ -90,7 +90,7 @@ export default function UserDashboard() {
 
       // Fetch everything else in parallel to maximize speed
       const results = await Promise.allSettled([
-        supabase.from('sessions').select(`*, listener:listener_id (users (full_name))`).eq('student_id', user.id).order('scheduled_at', { ascending: false }),
+        supabase.from('sessions').select(`*, listener:listener_id(full_name)`).eq('student_id', user.id).order('scheduled_at', { ascending: false }),
         supabase.from('journal_entries').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
         supabase.from('ai_reflections').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
         supabase.from('payments').select('amount').eq('user_id', user.id).eq('status', 'completed')
@@ -715,7 +715,7 @@ export default function UserDashboard() {
                     {sessions.map(s => (
                       <motion.div key={s.id} variants={fadeInUp} className="session-card" style={{ padding: '24px', background: '#fff', borderRadius: '16px', border: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <div>
-                          <div style={{ fontWeight: '600', color: 'var(--text)' }}>Session with {s.listener?.users?.full_name || 'Peer Listener (Pending)'}</div>
+                          <div style={{ fontWeight: '600', color: 'var(--text)' }}>Session with {s.listener?.full_name || 'Peer Listener (Pending)'}</div>
                           <div style={{ fontSize: '14px', color: 'var(--text3)' }}>{new Date(s.scheduled_at).toLocaleDateString()} • {s.format}</div>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>

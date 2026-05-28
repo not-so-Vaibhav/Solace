@@ -39,11 +39,11 @@ export default function Navbar() {
 
       <div className="nav-socials">
         {[
-          { id: 'youtube', url: 'https://www.youtube.com/@Solacetalks', icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.42a2.78 2.78 0 0 0-1.94 2C1 8.11 1 12 1 12s0 3.89.46 5.58a2.78 2.78 0 0 0 1.94 2c1.72.42 8.6.42 8.6.42s6.88 0 8.6-.42a2.78 2.78 0 0 0 1.94-2C23 15.89 23 12 23 12s0-3.89-.46-5.58z"/><polygon points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02"/></svg> },
-          { id: 'instagram', url: 'https://www.instagram.com/solace.talks/', icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg> },
-          { id: 'discord', url: 'https://discord.gg/5MRM53CrXG', icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 10a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm6 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2z" /><path d="M12 2a10 10 0 0 0-9 13.5l1 2.5a1 1 0 0 0 1 1h2.5c.7 0 1.3-.4 1.7-1a10 10 0 0 1 5.6 0c.4.6 1 1 1.7 1H21a1 1 0 0 0 1-1l1-2.5A10 10 0 0 0 12 2z" /></svg> },
-          { id: 'x', url: 'https://x.com/solace_talks', icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4l11.733 16h4.267l-11.733 -16z"/><path d="M4 20l6.768 -6.768m2.46 -2.46l6.772 -6.772"/></svg> },
-          { id: 'linkedin', url: 'https://www.linkedin.com/in/solace-talks', icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg> }
+          { id: 'youtube', url: 'https://www.youtube.com/@Solacetalks', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.42a2.78 2.78 0 0 0-1.94 2C1 8.11 1 12 1 12s0 3.89.46 5.58a2.78 2.78 0 0 0 1.94 2c1.72.42 8.6.42 8.6.42s6.88 0 8.6-.42a2.78 2.78 0 0 0 1.94-2C23 15.89 23 12 23 12s0-3.89-.46-5.58z"/><polygon points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02"/></svg> },
+          { id: 'instagram', url: 'https://www.instagram.com/solace.talks/', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg> },
+          { id: 'discord', url: 'https://discord.gg/5MRM53CrXG', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 10a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm6 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2z" /><path d="M12 2a10 10 0 0 0-9 13.5l1 2.5a1 1 0 0 0 1 1h2.5c.7 0 1.3-.4 1.7-1a10 10 0 0 1 5.6 0c.4.6 1 1 1.7 1H21a1 1 0 0 0 1-1l1-2.5A10 10 0 0 0 12 2z" /></svg> },
+          { id: 'x', url: 'https://x.com/solace_talks', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4l11.733 16h4.267l-11.733 -16z"/><path d="M4 20l6.768 -6.768m2.46 -2.46l6.772 -6.772"/></svg> },
+          { id: 'linkedin', url: 'https://www.linkedin.com/company/solace-talks/', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg> }
         ].map(social => (
           <a key={social.id} href={social.url} target="_blank" rel="noopener noreferrer" className="social-btn">
             {social.icon}
@@ -121,11 +121,11 @@ export default function Navbar() {
             <p className="menu-tagline">Peer support for students, by students.</p>
             <div className="menu-socials">
               {[
-                { id: 'youtube', url: 'https://www.youtube.com/@Solacetalks', icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.42a2.78 2.78 0 0 0-1.94 2C1 8.11 1 12 1 12s0 3.89.46 5.58a2.78 2.78 0 0 0 1.94 2c1.72.42 8.6.42 8.6.42s6.88 0 8.6-.42a2.78 2.78 0 0 0 1.94-2C23 15.89 23 12 23 12s0-3.89-.46-5.58z"/><polygon points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02"/></svg> },
-                { id: 'instagram', url: 'https://www.instagram.com/solace.talks/', icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg> },
-                { id: 'discord', url: 'https://discord.gg/5MRM53CrXG', icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 10a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm6 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2z" /><path d="M12 2a10 10 0 0 0-9 13.5l1 2.5a1 1 0 0 0 1 1h2.5c.7 0 1.3-.4 1.7-1a10 10 0 0 1 5.6 0c.4.6 1 1 1.7 1H21a1 1 0 0 0 1-1l1-2.5A10 10 0 0 0 12 2z" /></svg> },
-                { id: 'x', url: 'https://x.com/solace_talks', icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4l11.733 16h4.267l-11.733 -16z"/><path d="M4 20l6.768 -6.768m2.46 -2.46l6.772 -6.772"/></svg> },
-                { id: 'linkedin', url: 'https://www.linkedin.com/in/solace-talks', icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg> }
+                { id: 'youtube', url: 'https://www.youtube.com/@Solacetalks', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.42a2.78 2.78 0 0 0-1.94 2C1 8.11 1 12 1 12s0 3.89.46 5.58a2.78 2.78 0 0 0 1.94 2c1.72.42 8.6.42 8.6.42s6.88 0 8.6-.42a2.78 2.78 0 0 0 1.94-2C23 15.89 23 12 23 12s0-3.89-.46-5.58z"/><polygon points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02"/></svg> },
+                { id: 'instagram', url: 'https://www.instagram.com/solace.talks/', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg> },
+                { id: 'discord', url: 'https://discord.gg/5MRM53CrXG', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 10a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm6 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2z" /><path d="M12 2a10 10 0 0 0-9 13.5l1 2.5a1 1 0 0 0 1 1h2.5c.7 0 1.3-.4 1.7-1a10 10 0 0 1 5.6 0c.4.6 1 1 1.7 1H21a1 1 0 0 0 1-1l1-2.5A10 10 0 0 0 12 2z" /></svg> },
+                { id: 'x', url: 'https://x.com/solace_talks', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4l11.733 16h4.267l-11.733 -16z"/><path d="M4 20l6.768 -6.768m2.46 -2.46l6.772 -6.772"/></svg> },
+                { id: 'linkedin', url: 'https://www.linkedin.com/company/solace-talks/', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg> }
               ].map(social => (
                 <a key={social.id} href={social.url} target="_blank" rel="noopener noreferrer" className="social-btn">
                   {social.icon}
@@ -291,6 +291,7 @@ export default function Navbar() {
         .mobile-toggle-btn.is-active .line:nth-child(2) { transform: translateY(-3px) rotate(-45deg); }
 
         .premium-menu {
+          display: none; /* Hide entirely on desktop */
           position: fixed;
           top: 0;
           left: 0;
@@ -301,6 +302,10 @@ export default function Navbar() {
           visibility: hidden;
           clip-path: circle(30px at calc(95% - 22px) 36px);
           transition: all 0.7s cubic-bezier(0.77, 0, 0.175, 1);
+        }
+
+        @media (max-width: 900px) {
+          .premium-menu { display: block; }
         }
 
         .premium-menu.is-open {

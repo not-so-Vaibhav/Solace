@@ -54,6 +54,21 @@ export default function LoginPage() {
     }
   };
 
+  const handleOAuthLogin = async (provider) => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: provider,
+        options: {
+          redirectTo: `${window.location.origin}/dashboard`
+        }
+      });
+      if (error) throw error;
+    } catch (err) {
+      console.error(`${provider} login error:`, err);
+      setError(`Failed to log in with ${provider}`);
+    }
+  };
+
   return (
     <>
       <Navbar />
@@ -116,9 +131,12 @@ export default function LoginPage() {
             <div className="divider-text">or continue with</div>
 
             <div className="social-login">
-              <div className="social-icon">G</div>
-              <div className="social-icon"></div>
-              <div className="social-icon">f</div>
+              <div 
+                className="social-icon" 
+                onClick={() => handleOAuthLogin('google')}
+                style={{ cursor: 'pointer', transition: 'all 0.3s' }}
+                title="Continue with Google"
+              >G</div>
             </div>
 
             <p className="register-prompt">
