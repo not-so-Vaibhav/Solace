@@ -214,6 +214,17 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleClearCancelledSessions = async () => {
+    if (!window.confirm('Are you sure you want to permanently delete all cancelled sessions?')) return;
+    
+    const { error } = await supabase.from('sessions').delete().eq('status', 'cancelled');
+    if (!error) {
+      fetchAdminData();
+    } else {
+      alert('Error clearing cancelled sessions: ' + error.message);
+    }
+  };
+
   const handleCreateManualBooking = async () => {
     if (!manualBooking.student_id || !manualBooking.date || !manualBooking.time) {
       return alert("Please select a student, date, and time.");
@@ -490,12 +501,20 @@ export default function AdminDashboard() {
             <div className="fadeIn">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>
                 <h1 style={{ fontFamily: 'var(--serif)', fontSize: '36px', color: 'var(--text)', margin: 0 }}>Global Bookings</h1>
-                <button 
-                  onClick={() => setShowManualBooking(true)}
-                  style={{ background: 'var(--accent)', color: '#fff', border: 'none', padding: '12px 24px', borderRadius: '50px', cursor: 'pointer', fontWeight: '600' }}
-                >
-                  + Manual Booking
-                </button>
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <button 
+                    onClick={handleClearCancelledSessions}
+                    style={{ background: '#FEE2E2', color: '#DC2626', border: 'none', padding: '12px 24px', borderRadius: '50px', cursor: 'pointer', fontWeight: '600' }}
+                  >
+                    Clear Cancelled
+                  </button>
+                  <button 
+                    onClick={() => setShowManualBooking(true)}
+                    style={{ background: 'var(--accent)', color: '#fff', border: 'none', padding: '12px 24px', borderRadius: '50px', cursor: 'pointer', fontWeight: '600' }}
+                  >
+                    + Manual Booking
+                  </button>
+                </div>
               </div>
 
               {showManualBooking && (
@@ -599,10 +618,13 @@ export default function AdminDashboard() {
                                   <button onClick={() => handleUpdateStatus(b.id, 'confirmed')} style={{ padding: '4px 8px', fontSize: '10px', background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Confirm</button>
                                 )}
                                 {b.status === 'assigned' && (
-                                  <button onClick={() => handleUpdateStatus(b.id, 'started')} style={{ padding: '4px 8px', fontSize: '10px', background: '#3B82F6', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Start</button>
+                                  <button onClick={() => { handleUpdateStatus(b.id, 'started'); window.open(`https://meet.jit.si/Solace-Session-${b.id}`, '_blank'); }} style={{ padding: '4px 8px', fontSize: '10px', background: '#3B82F6', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Start</button>
                                 )}
                                 {b.status === 'started' && (
-                                  <button onClick={() => handleUpdateStatus(b.id, 'completed')} style={{ padding: '4px 8px', fontSize: '10px', background: '#10B981', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Complete</button>
+                                  <>
+                                    <button onClick={() => window.open(`https://meet.jit.si/Solace-Session-${b.id}`, '_blank')} style={{ padding: '4px 8px', fontSize: '10px', background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Join</button>
+                                    <button onClick={() => handleUpdateStatus(b.id, 'completed')} style={{ padding: '4px 8px', fontSize: '10px', background: '#10B981', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Complete</button>
+                                  </>
                                 )}
                                 {b.status === 'completed' && (
                                   <button onClick={() => generateReflection(b.id, b.student_id)} style={{ padding: '4px 8px', fontSize: '10px', background: 'var(--text)', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Reflect ✨</button>

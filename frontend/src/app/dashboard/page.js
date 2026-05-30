@@ -594,16 +594,30 @@ export default function UserDashboard() {
                                 <div style={{ fontSize: '14px', color: 'var(--text2)' }}>{new Date(upcoming.scheduled_at).toLocaleDateString()} at {new Date(upcoming.scheduled_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
                               </div>
                             </div>
-                            {upcoming.status === 'started' && (
+                            {upcoming.status === 'started' ? (
                               <motion.button 
                                 whileHover={{ scale: 1.02 }}
                                 whileTap={{ scale: 0.98 }}
                                 style={{ width: '100%', padding: '12px', borderRadius: '12px', background: 'var(--accent)', color: '#fff', border: 'none', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
-                                onClick={() => window.open('https://meet.google.com/new', '_blank')}
+                                onClick={() => window.open(`https://meet.jit.si/Solace-Session-${upcoming.id}`, '_blank')}
                               >
                                 Join Session Now 📹
                               </motion.button>
-                            )}
+                            ) : upcoming.status === 'assigned' ? (
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                <motion.button 
+                                  style={{ width: '100%', padding: '12px', borderRadius: '12px', background: '#e5e7eb', color: '#9ca3af', border: 'none', fontWeight: '600', cursor: 'not-allowed', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                                  disabled
+                                >
+                                  Join Session (Waiting for Listener)
+                                </motion.button>
+                                {Date.now() > new Date(upcoming.scheduled_at).getTime() + 10 * 60000 && (
+                                  <div style={{ fontSize: '13px', color: '#DC2626', textAlign: 'center', background: '#FEE2E2', padding: '8px', borderRadius: '8px', marginTop: '4px' }}>
+                                    Your listener has not started the session yet. Please wait a few moments or contact support.
+                                  </div>
+                                )}
+                              </div>
+                            ) : null}
                           </div>
                         );
                       })() : (
@@ -719,16 +733,23 @@ export default function UserDashboard() {
                           <div style={{ fontSize: '14px', color: 'var(--text3)' }}>{new Date(s.scheduled_at).toLocaleDateString()} • {s.format}</div>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                          {s.status === 'started' && (
+                          {s.status === 'started' ? (
                             <motion.button 
                               whileHover={{ scale: 1.05 }}
                               whileTap={{ scale: 0.95 }}
-                              onClick={() => window.open('https://meet.google.com/new', '_blank')}
+                              onClick={() => window.open(`https://meet.jit.si/Solace-Session-${s.id}`, '_blank')}
                               style={{ padding: '8px 16px', borderRadius: '8px', background: 'var(--accent)', color: '#fff', border: 'none', fontSize: '12px', fontWeight: '600', cursor: 'pointer' }}
                             >
                               Join 📹
                             </motion.button>
-                          )}
+                          ) : s.status === 'assigned' ? (
+                            <motion.button 
+                              disabled
+                              style={{ padding: '8px 16px', borderRadius: '8px', background: '#e5e7eb', color: '#9ca3af', border: 'none', fontSize: '12px', fontWeight: '600', cursor: 'not-allowed' }}
+                            >
+                              Join (Waiting)
+                            </motion.button>
+                          ) : null}
                           <div style={{ 
                             textTransform: 'uppercase', 
                             fontSize: '10px', 
