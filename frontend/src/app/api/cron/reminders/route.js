@@ -6,15 +6,16 @@ export async function GET(request) {
   try {
     // 10 minutes from now
     const now = new Date();
-    const tenMinsFromNow = new Date(now.getTime() + 10 * 60000);
+    // We look for sessions starting between 5 and 15 mins from now to account for cron execution delays
+    const fiveMinsFromNow = new Date(now.getTime() + 5 * 60000);
     const fifteenMinsFromNow = new Date(now.getTime() + 15 * 60000);
 
-    // Fetch sessions assigned but not yet started that are starting between 10 and 15 mins from now
+    // Fetch sessions assigned but not yet started that are starting between 5 and 15 mins from now
     const { data: sessions, error } = await supabase
       .from('sessions')
       .select('*, student:student_id(email, full_name), listener:listener_id(full_name)')
       .eq('status', 'assigned')
-      .gte('scheduled_at', tenMinsFromNow.toISOString())
+      .gte('scheduled_at', fiveMinsFromNow.toISOString())
       .lte('scheduled_at', fifteenMinsFromNow.toISOString());
 
     if (error) {
