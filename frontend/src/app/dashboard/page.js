@@ -6,6 +6,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
 import { motion, AnimatePresence } from 'framer-motion';
+import ChatWindow from '@/components/chat/ChatWindow';
 
 const fadeInUp = {
   initial: { opacity: 0, y: 20 },
@@ -43,6 +44,7 @@ export default function UserDashboard() {
   const [isMobile, setIsMobile] = useState(false);
   const [profileName, setProfileName] = useState('');
   const [notifications, setNotifications] = useState({ session_reminders: true, reflection_emails: true });
+  const [activeChatSessionId, setActiveChatSessionId] = useState(null);
   
   const { user, userRole, loading, logout } = useAuth(); // Added logout
   const router = useRouter();
@@ -598,6 +600,16 @@ export default function UserDashboard() {
                               <motion.button 
                                 whileHover={{ scale: 1.02 }}
                                 whileTap={{ scale: 0.98 }}
+                                style={{ width: '100%', padding: '12px', borderRadius: '12px', background: 'var(--surface)', color: 'var(--text)', border: '1px solid var(--border)', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '8px' }}
+                                onClick={() => setActiveChatSessionId(upcoming.id)}
+                              >
+                                Open Chat 💬
+                              </motion.button>
+                            ) : null}
+                            {upcoming.status === 'started' && upcoming.format !== 'Chat Session' ? (
+                              <motion.button 
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
                                 style={{ width: '100%', padding: '12px', borderRadius: '12px', background: 'var(--accent)', color: '#fff', border: 'none', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
                                 onClick={() => window.open(`https://meet.jit.si/Solace-Session-${upcoming.id}`, '_blank')}
                               >
@@ -734,6 +746,16 @@ export default function UserDashboard() {
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                           {s.status === 'started' ? (
+                            <motion.button 
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={() => setActiveChatSessionId(s.id)}
+                              style={{ padding: '8px 16px', borderRadius: '8px', background: '#F3F4F6', color: '#374151', border: '1px solid #D1D5DB', fontSize: '12px', fontWeight: '600', cursor: 'pointer' }}
+                            >
+                              Chat 💬
+                            </motion.button>
+                          ) : null}
+                          {s.status === 'started' && s.format !== 'Chat Session' ? (
                             <motion.button 
                               whileHover={{ scale: 1.05 }}
                               whileTap={{ scale: 0.95 }}
@@ -1161,6 +1183,16 @@ export default function UserDashboard() {
           </AnimatePresence>
         </section>
       </div>
+
+      {/* Render ChatWindow conditionally */}
+      {activeChatSessionId && (
+        <ChatWindow 
+          sessionId={activeChatSessionId} 
+          currentUserId={user?.id} 
+          onClose={() => setActiveChatSessionId(null)} 
+        />
+      )}
+
 
       <style jsx>{`
         .dash-layout { display: flex; min-height: calc(100vh - 72px); background: var(--bg); position: relative; }

@@ -4,10 +4,12 @@ import Navbar from '../../components/layout/Navbar';
 import Footer from '../../components/layout/Footer';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/lib/supabase/client';
+import ChatWindow from '@/components/chat/ChatWindow';
 
 export default function ListenerDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
   const [sessions, setSessions] = useState([]);
+  const [activeChatSessionId, setActiveChatSessionId] = useState(null);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -20,7 +22,11 @@ export default function ListenerDashboard() {
 
   const handleStartSession = async (session) => {
     await supabase.from('sessions').update({ status: 'started' }).eq('id', session.id);
-    window.open(`https://meet.jit.si/Solace-Session-${session.id}`, '_blank');
+    if (session.format === 'Chat Session') {
+      setActiveChatSessionId(session.id);
+    } else {
+      window.open(`https://meet.jit.si/Solace-Session-${session.id}`, '_blank');
+    }
     const { data } = await supabase.from('sessions').select(`*, student:student_id(full_name)`).eq('listener_id', user.id).order('scheduled_at', { ascending: false });
     if(data) setSessions(data);
   };
@@ -67,11 +73,14 @@ export default function ListenerDashboard() {
                       <div style={{ fontWeight: '600' }}>{s.student?.full_name || 'Student'}</div>
                       <div style={{ fontSize: '14px', color: 'var(--text3)' }}>{new Date(s.scheduled_at).toLocaleDateString()} at {new Date(s.scheduled_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
                     </div>
-                    <div>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      {s.status === 'started' && (
+                        <button onClick={() => setActiveChatSessionId(s.id)} style={{ padding: '8px 16px', background: '#F3F4F6', color: '#374151', border: '1px solid #D1D5DB', borderRadius: '8px', cursor: 'pointer', fontWeight: '600' }}>Chat 💬</button>
+                      )}
                       {s.status === 'assigned' && (
                         <button onClick={() => handleStartSession(s)} style={{ padding: '8px 16px', background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: '600' }}>Start Session</button>
                       )}
-                      {s.status === 'started' && (
+                      {s.status === 'started' && s.format !== 'Chat Session' && (
                         <button onClick={() => window.open(`https://meet.jit.si/Solace-Session-${s.id}`, '_blank')} style={{ padding: '8px 16px', background: '#3B82F6', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: '600' }}>Join Meeting</button>
                       )}
                       {s.status === 'completed' && <span style={{ color: '#10B981', fontWeight: '600' }}>Completed</span>}
@@ -83,6 +92,15 @@ export default function ListenerDashboard() {
           )}
         </section>
       </div>
+
+      {activeChatSessionId && (
+        <ChatWindow 
+          sessionId={activeChatSessionId} 
+          currentUserId={user?.id} 
+          onClose={() => setActiveChatSessionId(null)} 
+        />
+      )}
+
       <Footer />
     </main>
   );

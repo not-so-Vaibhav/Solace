@@ -6,6 +6,7 @@ import Footer from '@/components/layout/Footer';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
+import ChatWindow from '@/components/chat/ChatWindow';
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
@@ -38,6 +39,7 @@ export default function AdminDashboard() {
   });
   const [isMobile, setIsMobile] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [activeChatSessionId, setActiveChatSessionId] = useState(null);
 
   const { user, userRole, loading } = useAuth();
   const router = useRouter();
@@ -618,16 +620,30 @@ export default function AdminDashboard() {
                                   <button onClick={() => handleUpdateStatus(b.id, 'confirmed')} style={{ padding: '4px 8px', fontSize: '10px', background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Confirm</button>
                                 )}
                                 {b.status === 'assigned' && (
-                                  <button onClick={() => { handleUpdateStatus(b.id, 'started'); window.open(`https://meet.jit.si/Solace-Session-${b.id}`, '_blank'); }} style={{ padding: '4px 8px', fontSize: '10px', background: '#3B82F6', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Start</button>
+                                  <button onClick={() => { 
+                                    handleUpdateStatus(b.id, 'started'); 
+                                    if (b.format !== 'Chat Session') {
+                                      window.open(`https://meet.jit.si/Solace-Session-${b.id}`, '_blank'); 
+                                    } else {
+                                      setActiveChatSessionId(b.id);
+                                    }
+                                  }} style={{ padding: '4px 8px', fontSize: '10px', background: '#3B82F6', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Start</button>
                                 )}
                                 {b.status === 'started' && (
                                   <>
-                                    <button onClick={() => window.open(`https://meet.jit.si/Solace-Session-${b.id}`, '_blank')} style={{ padding: '4px 8px', fontSize: '10px', background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Join</button>
+                                    {b.format !== 'Chat Session' ? (
+                                      <button onClick={() => window.open(`https://meet.jit.si/Solace-Session-${b.id}`, '_blank')} style={{ padding: '4px 8px', fontSize: '10px', background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Join</button>
+                                    ) : (
+                                      <button onClick={() => setActiveChatSessionId(b.id)} style={{ padding: '4px 8px', fontSize: '10px', background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Open Chat</button>
+                                    )}
                                     <button onClick={() => handleUpdateStatus(b.id, 'completed')} style={{ padding: '4px 8px', fontSize: '10px', background: '#10B981', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Complete</button>
                                   </>
                                 )}
                                 {b.status === 'completed' && (
-                                  <button onClick={() => generateReflection(b.id, b.student_id)} style={{ padding: '4px 8px', fontSize: '10px', background: 'var(--text)', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Reflect ✨</button>
+                                  <>
+                                    <button onClick={() => generateReflection(b.id, b.student_id)} style={{ padding: '4px 8px', fontSize: '10px', background: 'var(--text)', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Reflect ✨</button>
+                                    <button onClick={() => setActiveChatSessionId(b.id)} style={{ padding: '4px 8px', fontSize: '10px', background: '#F3F4F6', color: '#374151', border: '1px solid #D1D5DB', borderRadius: '4px', cursor: 'pointer' }}>View Chat 💬</button>
+                                  </>
                                 )}
                                 {['booked', 'confirmed', 'assigned'].includes(b.status) && (
                                   <button onClick={() => handleCancelSession(b)} style={{ padding: '4px 8px', fontSize: '10px', background: '#FEE2E2', color: '#DC2626', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Cancel</button>
@@ -740,6 +756,20 @@ export default function AdminDashboard() {
           )}
         </section>
       </div>
+
+      {activeChatSessionId && (
+        <ChatWindow 
+          sessionId={activeChatSessionId} 
+          currentUserId={user?.id} 
+          onClose={() => setActiveChatSessionId(null)} 
+          readonly={(() => {
+            const session = bookings.find(b => b.id === activeChatSessionId);
+            if (!session) return true;
+            return session.listener_id !== user?.id && session.student_id !== user?.id;
+          })()}
+        />
+      )}
+
       <Footer />
     </main>
   );
