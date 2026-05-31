@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
+import { load } from '@cashfreepayments/cashfree-js';
 import Navbar from '../../components/layout/Navbar';
 import Footer from '../../components/layout/Footer';
 import { useAuth } from '@/context/AuthContext';
@@ -31,6 +32,8 @@ export default function BookingPage() {
   const [showFullCalendar, setShowFullCalendar] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [blockedSlots, setBlockedSlots] = useState([]);
+  const [cashfree, setCashfree] = useState(null);
+  const [paymentStatus, setPaymentStatus] = useState('idle');
 
   const { user, loading } = useAuth();
   const router = useRouter();
@@ -42,78 +45,12 @@ export default function BookingPage() {
     }
   }, [user, loading, router]);
 
-  // Inline PayForge payment state
-  const [qrCodeUrl, setQrCodeUrl]       = useState(null);
-  const [upiVpa, setUpiVpa]             = useState(null);
-  const [upiLink, setUpiLink]           = useState(null);
-  const [pfOrderId, setPfOrderId]       = useState(null);
-  const [pfAmount, setPfAmount]         = useState(null);
-  const [pfExpiry, setPfExpiry]         = useState(null);
-  const [pfStatus, setPfStatus]         = useState('idle'); // idle | loading | ready | paid | expired | error
-  const pollRef = useRef(null);
-
-  const PAYFORGE_SERVER = 'https://payment-integration-system.onrender.com';
-  const ENTERPRISE_ID   = '5821271e-155e-4255-8331-e48163d5a1dc';
-
-  // Create order when user reaches Step 4
   useEffect(() => {
-    if (step !== 4 || !user) return;
-    setPfStatus('loading');
-    setQrCodeUrl(null);
-    setPfOrderId(null);
-
-    fetch(`${PAYFORGE_SERVER}/api/orders/create`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name:          user?.user_metadata?.full_name || 'Student',
-        email:         user?.email || '',
-        phone:         '',
-        plan:          'Chat Session',
-        enterprise_id: ENTERPRISE_ID
-      })
-    })
-    .then(r => r.json())
-    .then(data => {
-      if (!data.orderId) throw new Error(data.error || 'No orderId returned');
-      setPfOrderId(data.orderId);
-      setPfAmount(data.amount);
-      setPfExpiry(new Date(data.expiresAt));
-      setUpiVpa(data.upiVpa);
-      setUpiLink(data.upiLink);
-      setQrCodeUrl(`https://api.qrserver.com/v1/create-qr-code/?size=280x280&margin=10&data=${encodeURIComponent(data.upiLink)}`);
-      setPfStatus('ready');
-    })
-    .catch(err => {
-      console.error('[PayForge] Order create failed:', err);
-      setPfStatus('error');
-    });
-
-    return () => { if (pollRef.current) clearInterval(pollRef.current); };
-  }, [step, user]);
-
-  // Poll for payment status every 3 seconds
-  useEffect(() => {
-    if (pfStatus !== 'ready' || !pfOrderId) return;
-    if (pollRef.current) clearInterval(pollRef.current);
-
-    pollRef.current = setInterval(async () => {
-      try {
-        const res  = await fetch(`${PAYFORGE_SERVER}/api/orders/${pfOrderId}`);
-        const data = await res.json();
-        if (data.order?.status === 'paid') {
-          clearInterval(pollRef.current);
-          setPfStatus('paid');
-          await handlePayment(pfOrderId);
-        } else if (data.order?.status === 'expired') {
-          clearInterval(pollRef.current);
-          setPfStatus('expired');
-        }
-      } catch (e) { console.warn('[PayForge] Poll error', e); }
-    }, 3000);
-
-    return () => clearInterval(pollRef.current);
-  }, [pfStatus, pfOrderId]);
+    // Initialize Cashfree SDK
+    load({
+      mode: process.env.NEXT_PUBLIC_CASHFREE_ENV === 'PRODUCTION' ? 'production' : 'sandbox'
+    }).then(cf => setCashfree(cf));
+  }, []);
 
   useEffect(() => {
     fetchBlockedSlots();
@@ -165,7 +102,50 @@ export default function BookingPage() {
   const subtotal = format && duration ? pricing[format][duration] : 0;
   const total = subtotal + platformFee;
 
-  const handlePayment = async (payforgeOrderId) => {
+  const handleCashfreePayment = async () => {
+    if (!cashfree) return alert('Payment system is initializing, please wait...');
+    setIsProcessing(true);
+    setPaymentStatus('loading');
+    
+    try {
+      const res = await fetch('/api/cashfree/create-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amount: total,
+          customer_id: user.id,
+          customer_name: user?.user_metadata?.full_name || 'Student',
+          customer_email: user?.email || '',
+          customer_phone: '9999999999'
+        })
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+
+      cashfree.checkout({
+        paymentSessionId: data.payment_session_id,
+        redirectTarget: '_modal'
+      }).then(async (result) => {
+        if (result.error) {
+          console.error(result.error);
+          alert('Payment failed or cancelled: ' + result.error.message);
+          setPaymentStatus('idle');
+        } else if (result.redirect) {
+          console.log('Payment redirected');
+        } else if (result.paymentDetails) {
+          setPaymentStatus('paid');
+          await handlePaymentSuccess(data.order_id);
+        }
+      });
+    } catch (err) {
+      alert('Error initiating payment: ' + err.message);
+      setPaymentStatus('error');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handlePaymentSuccess = async (cashfreeOrderId) => {
     setIsProcessing(true);
     try {
       const scheduledAt = new Date(selectedDate);
@@ -189,8 +169,8 @@ export default function BookingPage() {
       const { error: paymentErr } = await supabase.from('payments').insert([{
         user_id: user.id,
         session_id: session.id,
-        provider: 'payforge',
-        provider_payment_id: payforgeOrderId,
+        provider: 'cashfree',
+        provider_payment_id: cashfreeOrderId,
         amount: total,
         status: 'completed'
       }]);
@@ -203,7 +183,7 @@ export default function BookingPage() {
         const dateStr = scheduledAt.toLocaleDateString();
         const timeStr = scheduledAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         sendEmail({ to: user.email, subject: 'Your Solace Session is Booked!', html: getBookingConfirmationTemplate(user.user_metadata?.full_name || 'Student', dateStr, timeStr, total) });
-        sendEmail({ to: user.email, subject: 'Payment Receipt - Solace', html: getPaymentReceiptTemplate(user.user_metadata?.full_name || 'Student', total, payforgeOrderId) });
+        sendEmail({ to: user.email, subject: 'Payment Receipt - Solace', html: getPaymentReceiptTemplate(user.user_metadata?.full_name || 'Student', total, cashfreeOrderId) });
       } catch (emailErr) {
         console.error('Post-booking Email Error:', emailErr);
       }
@@ -495,39 +475,15 @@ export default function BookingPage() {
                 </div>
 
                 <div className="payment-card" style={{ background: '#fff', padding: '32px', borderRadius: '24px', border: '1px solid var(--border)', textAlign: 'center' }}>
-                  <h4 style={{ textTransform: 'uppercase', fontSize: '11px', letterSpacing: '1.5px', color: 'var(--text3)', marginBottom: '24px' }}>🔒 Secure Payment via PayForge</h4>
+                  <h4 style={{ textTransform: 'uppercase', fontSize: '11px', letterSpacing: '1.5px', color: 'var(--text3)', marginBottom: '24px' }}>🔒 Secure Payment via Cashfree</h4>
 
-                  {/* LOADING */}
-                  {pfStatus === 'loading' && (
-                    <div style={{ padding: '40px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
-                      <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                        style={{ border: '3px solid #E5E1DA', borderTopColor: '#517C71', borderRadius: '50%', width: '40px', height: '40px' }} />
-                      <p style={{ color: 'var(--text3)', fontSize: '14px' }}>Generating your payment QR…</p>
+                  {paymentStatus === 'loading' && (
+                    <div style={{ padding: '20px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
+                      <p style={{ color: 'var(--text3)' }}>Opening secure payment modal...</p>
                     </div>
                   )}
 
-                  {/* ERROR */}
-                  {pfStatus === 'error' && (
-                    <div style={{ padding: '24px 0' }}>
-                      <p style={{ color: '#DC2626', marginBottom: '16px' }}>Failed to load payment. Please try again.</p>
-                      <button onClick={() => setStep(4)} style={{ background: '#517C71', color: '#fff', border: 'none', borderRadius: '50px', padding: '12px 28px', cursor: 'pointer', fontSize: '14px' }}>
-                        Retry
-                      </button>
-                    </div>
-                  )}
-
-                  {/* EXPIRED */}
-                  {pfStatus === 'expired' && (
-                    <div style={{ padding: '24px 0' }}>
-                      <p style={{ color: '#DC2626', marginBottom: '16px' }}>QR code has expired.</p>
-                      <button onClick={() => { setPfStatus('idle'); setTimeout(() => setStep(4), 50); }} style={{ background: '#517C71', color: '#fff', border: 'none', borderRadius: '50px', padding: '12px 28px', cursor: 'pointer', fontSize: '14px' }}>
-                        Generate New QR
-                      </button>
-                    </div>
-                  )}
-
-                  {/* PAID / PROCESSING */}
-                  {pfStatus === 'paid' && (
+                  {paymentStatus === 'paid' && (
                     <div style={{ padding: '32px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
                       <div style={{ fontSize: '48px' }}>✅</div>
                       <p style={{ fontWeight: '600', fontSize: '16px', color: '#059669' }}>Payment Verified!</p>
@@ -535,54 +491,35 @@ export default function BookingPage() {
                     </div>
                   )}
 
-                  {/* QR READY */}
-                  {pfStatus === 'ready' && qrCodeUrl && (
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px' }}>
-                      {/* QR Code */}
-                      <div style={{ padding: '16px', background: '#F7F5F2', borderRadius: '16px', border: '1px solid var(--border)', display: 'inline-block' }}>
-                        <img src={qrCodeUrl} alt="UPI QR Code" width={220} height={220} style={{ display: 'block', borderRadius: '8px' }} />
-                      </div>
-
-                      {/* UPI Details */}
-                      <div style={{ background: '#F0FDF4', border: '1px solid #BBF7D0', borderRadius: '12px', padding: '16px 24px', width: '100%', maxWidth: '340px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                          <span style={{ fontSize: '12px', color: 'var(--text3)' }}>UPI ID</span>
-                          <span style={{ fontSize: '13px', fontWeight: '600', fontFamily: 'monospace' }}>{upiVpa || '—'}</span>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                          <span style={{ fontSize: '12px', color: 'var(--text3)' }}>Amount</span>
-                          <span style={{ fontSize: '15px', fontWeight: '700', color: '#517C71' }}>₹{pfAmount || total}</span>
-                        </div>
-                      </div>
-
-                      <p style={{ fontSize: '12px', color: 'var(--text3)', lineHeight: '1.6' }}>
-                        Scan with any UPI app (GPay, PhonePe, Paytm, etc.)<br />
-                        Your booking confirms automatically after payment.
+                  {paymentStatus !== 'paid' && (
+                    <>
+                      <p style={{ fontSize: '14px', color: 'var(--text2)', marginBottom: '24px' }}>
+                        Click below to complete your payment securely. You will be able to choose UPI, Cards, NetBanking, etc.
                       </p>
-
-                      {/* Open in UPI App */}
-                      {upiLink && (
-                        <a href={upiLink} style={{ fontSize: '13px', color: '#517C71', fontWeight: '600', textDecoration: 'underline' }}>
-                          📱 Open in UPI App
-                        </a>
-                      )}
-
-                      {/* Live polling indicator */}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: 'var(--text3)' }}>
-                        <motion.div animate={{ scale: [1, 1.3, 1] }} transition={{ duration: 1.5, repeat: Infinity }}
-                          style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#22C55E' }} />
-                        Listening for payment…
-                      </div>
-
-                      {/* Payment Support Helpline */}
-                      <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid var(--border)', width: '100%', fontSize: '12px', color: 'var(--text3)' }}>
-                        Facing any issues with the payment? Call us at <a href="tel:+919430698561" style={{ color: 'var(--accent)', fontWeight: '600', textDecoration: 'underline' }}>+91 94306 98561</a>
-                      </div>
-                    </div>
+                      <button 
+                        onClick={handleCashfreePayment} 
+                        disabled={isProcessing || paymentStatus === 'loading'}
+                        style={{ 
+                          background: '#517C71', 
+                          color: '#fff', 
+                          border: 'none', 
+                          borderRadius: '50px', 
+                          padding: '16px 32px', 
+                          cursor: (isProcessing || paymentStatus === 'loading') ? 'not-allowed' : 'pointer', 
+                          fontSize: '16px',
+                          fontWeight: '600',
+                          opacity: (isProcessing || paymentStatus === 'loading') ? 0.7 : 1
+                        }}
+                      >
+                        {isProcessing || paymentStatus === 'loading' ? 'Processing...' : `Pay ₹${total}`}
+                      </button>
+                    </>
                   )}
                 </div>
 
-                <button onClick={() => setStep(3)} style={{ background: 'none', border: 'none', color: 'var(--text3)', cursor: 'pointer', textDecoration: 'underline', fontSize: '14px' }}>← Back</button>
+                {paymentStatus !== 'paid' && (
+                  <button onClick={() => setStep(3)} style={{ background: 'none', border: 'none', color: 'var(--text3)', cursor: 'pointer', textDecoration: 'underline', fontSize: '14px' }}>← Back</button>
+                )}
               </motion.div>
             )}
           </AnimatePresence>

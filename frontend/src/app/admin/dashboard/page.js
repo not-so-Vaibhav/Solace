@@ -35,7 +35,7 @@ export default function AdminDashboard() {
     date: '',
     time: '',
     format: 'Video Call',
-    duration: 30
+    duration: 25
   });
   const [isMobile, setIsMobile] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -249,7 +249,7 @@ export default function AdminDashboard() {
     if (!error) {
       alert("Manual booking created successfully!");
       setShowManualBooking(false);
-      setManualBooking({ student_id: '', listener_id: '', date: '', time: '', format: 'Video Call', duration: 30 });
+      setManualBooking({ student_id: '', listener_id: '', date: '', time: '', format: 'Video Call', duration: 25 });
       fetchAdminData();
     } else {
       alert("Failed to create booking: " + error.message);
@@ -535,10 +535,16 @@ export default function AdminDashboard() {
                     <input type="date" value={manualBooking.date} onChange={e => setManualBooking({...manualBooking, date: e.target.value})} style={{ padding: '12px', borderRadius: '8px', border: '1px solid var(--border)', background: '#fff' }} />
                     <input type="time" value={manualBooking.time} onChange={e => setManualBooking({...manualBooking, time: e.target.value})} style={{ padding: '12px', borderRadius: '8px', border: '1px solid var(--border)', background: '#fff' }} />
                     
-                    <select value={manualBooking.format} onChange={e => setManualBooking({...manualBooking, format: e.target.value})} style={{ padding: '12px', borderRadius: '8px', border: '1px solid var(--border)', background: '#fff' }}>
-                      <option value="Video Call">Video Call</option>
-                      <option value="Audio Call">Audio Call</option>
-                      <option value="Chat Session">Chat Session</option>
+                    <select value={`${manualBooking.format}-${manualBooking.duration}`} onChange={e => {
+                      const [format, duration] = e.target.value.split('-');
+                      setManualBooking({...manualBooking, format, duration: Number(duration)});
+                    }} style={{ padding: '12px', borderRadius: '8px', border: '1px solid var(--border)', background: '#fff' }}>
+                      <option value="Chat Session-25">Quick Vent (25 min) - Chat Session</option>
+                      <option value="Chat Session-50">Deep Talk (50 min) - Chat Session</option>
+                      <option value="Audio Call-25">Quick Vent (25 min) - Audio Call</option>
+                      <option value="Audio Call-50">Deep Talk (50 min) - Audio Call</option>
+                      <option value="Video Call-25">Quick Vent (25 min) - Video Call</option>
+                      <option value="Video Call-50">Deep Talk (50 min) - Video Call</option>
                     </select>
 
                     <button onClick={handleCreateManualBooking} style={{ background: 'var(--accent)', color: '#fff', border: 'none', padding: '12px', borderRadius: '8px', cursor: 'pointer', fontWeight: '600' }}>Save Booking</button>
