@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Navbar from '@/components/layout/Navbar';
+import AuthVisualSide from '@/components/auth/AuthVisualSide';
 import { supabase } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 
@@ -96,12 +97,7 @@ export default function ResetPasswordPage() {
               </p>
             </div>
           </section>
-          <section className="login-visual-side">
-            <div className="visual-card">
-              <h2 className="visual-title">Stay secure.</h2>
-              <p className="visual-sub">Reset links expire after 1 hour for your protection.</p>
-            </div>
-          </section>
+          <AuthVisualSide />
         </main>
       </>
     );
@@ -216,19 +212,7 @@ export default function ResetPasswordPage() {
           </div>
         </section>
 
-        <section className="login-visual-side">
-          <div className="visual-card">
-            <h2 className="visual-title">Almost there.</h2>
-            <p className="visual-sub">
-              Create a strong password to keep your <strong>Solace</strong> account secure.
-            </p>
-            <div style={{ display: 'flex', gap: '8px', marginTop: '30px' }}>
-              <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--text3)', opacity: 0.3 }}></div>
-              <div style={{ width: '20px', height: '8px', borderRadius: '50px', background: 'var(--text)' }}></div>
-              <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--text3)', opacity: 0.3 }}></div>
-            </div>
-          </div>
-        </section>
+        <AuthVisualSide />
       </main>
     </>
   );

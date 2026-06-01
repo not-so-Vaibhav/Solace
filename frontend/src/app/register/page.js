@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Navbar from '@/components/layout/Navbar';
+import AuthVisualSide from '@/components/auth/AuthVisualSide';
 import { supabase } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 
@@ -140,15 +141,7 @@ export default function RegisterPage() {
           </div>
         </section>
 
-        <section className="login-visual-side">
-          <div className="visual-card">
-            <img src="/images/login-illustration.png" alt="Register" className="visual-illustration" />
-            <h2 className="visual-title">You're not alone.</h2>
-            <p className="visual-sub">
-              Access peer support, journal your thoughts, and track your wellness journey with <strong>Solace</strong>.
-            </p>
-          </div>
-        </section>
+        <AuthVisualSide />
       </main>
     </>
   );

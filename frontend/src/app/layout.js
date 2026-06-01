@@ -2,7 +2,7 @@ import './globals.css';
 import { AuthProvider } from '@/context/AuthContext';
 
 export const metadata = {
-  title: 'Solace — Peer Support Platform',
+  title: 'Solace',
   description: 'Peer support, not therapy. You don\'t have to carry everything alone.',
 };
 

@@ -139,7 +139,7 @@ export default function LandingPage() {
         >
           <motion.div variants={fadeInUp} className="hero-badge">Peer Support, Not Therapy</motion.div>
           <motion.h1 variants={fadeInUp}>You don't have to carry <em>everything</em> alone.</motion.h1>
-          <motion.p variants={fadeInUp} className="hero-sub">A calm, private space to talk with trained student listeners — whenever you're feeling overwhelmed, burnt out, or just need to be heard.</motion.p>
+          <motion.p variants={fadeInUp} className="hero-sub">When life feels overwhelming, you don't have to face it alone. Connect with trained student listeners who genuinely listen without judgment.</motion.p>
           <motion.div variants={fadeInUp} className="hero-btns">
             <Link href="/booking" className="btn-primary" style={{ textDecoration: 'none' }}>Book a Session</Link>
             <button className="btn-secondary" onClick={scrollToHow}>How it works ↓</button>
@@ -172,7 +172,7 @@ export default function LandingPage() {
                 <div className="avatar av-teal">V</div>
                 <div>
                   <div className="hc-name">Vaibhav Bariyar</div>
-                  <div className="hc-tag">B.Tech Student • Founder Listener</div>
+                  <div className="hc-tag">Founder • Peer Listener • B.Tech Student</div>
                 </div>
               </div>
               <div className="hc-quote">"I built Solace because students often carry emotional pressure silently. Sometimes people don't need advice — they just need space to breathe and talk honestly."</div>
@@ -192,8 +192,7 @@ export default function LandingPage() {
             >
               {[
                 { num: stats.sessions, label: 'Sessions' },
-                { num: stats.rating, label: 'Rating' },
-                { num: stats.listeners, label: 'Listeners' }
+                { num: stats.rating, label: 'Rating' }
               ].map((stat, i) => (
                 <motion.div 
                    key={i} 
@@ -425,30 +424,33 @@ export default function LandingPage() {
       {/* CTA Section */}
       <motion.section 
         style={{ 
-          padding: '100px 5%', 
+          padding: '120px 5%', 
           textAlign: 'center', 
           background: 'linear-gradient(135deg, var(--accent) 0%, #3A6B5E 100%)', 
           color: '#fff',
           margin: '80px 5%',
-          borderRadius: '32px'
+          borderRadius: '32px',
+          boxShadow: '0 20px 40px rgba(58, 107, 94, 0.2)'
         }}
-        initial={{ opacity: 0, scale: 0.95 }}
-        whileInView={{ opacity: 1, scale: 1 }}
+        initial={{ opacity: 0, y: 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
         transition={{ duration: 0.8 }}
       >
-        <h2 style={{ fontFamily: 'var(--serif)', fontSize: '42px', marginBottom: '20px' }}>Ready to be heard?</h2>
-        <p style={{ fontSize: '18px', opacity: 0.9, marginBottom: '40px', maxWidth: '500px', margin: '0 auto 40px' }}>
-          Take the first step towards a calmer mind. Join 2,000+ students who use Solace every month.
+        <h2 style={{ fontFamily: 'var(--serif)', fontSize: '48px', marginBottom: '24px', letterSpacing: '-0.5px' }}>Ready to be heard?</h2>
+        <p style={{ fontSize: '20px', opacity: 0.9, marginBottom: '48px', maxWidth: '400px', margin: '0 auto 48px', lineHeight: '1.5' }}>
+          Take the first step towards a calmer mind.
         </p>
-        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+        <motion.div whileHover={{ scale: 1.05, y: -4 }} whileTap={{ scale: 0.95 }}>
           <Link href="/booking" className="btn-primary" style={{ 
             background: '#fff', 
             color: 'var(--accent)', 
             textDecoration: 'none',
-            padding: '18px 40px',
-            fontSize: '16px',
-            display: 'inline-block'
+            padding: '20px 48px',
+            fontSize: '17px',
+            fontWeight: '600',
+            display: 'inline-block',
+            boxShadow: '0 10px 25px rgba(0,0,0,0.1)'
           }}>
             Book your first session
           </Link>
