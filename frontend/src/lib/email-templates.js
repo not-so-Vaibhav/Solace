@@ -98,3 +98,33 @@ export const getListenerAssignedTemplate = (userName, listenerName, sessionDate,
     </div>
   </div>
 `;
+
+export const getRefundProcessedTemplate = (userName, amount, orderId) => `
+  <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
+    <div style="background: #E11D48; padding: 32px; text-align: center;">
+      <h1 style="color: white; margin: 0; font-size: 24px;">Refund Processed Successfully</h1>
+    </div>
+    <div style="padding: 32px; color: #1e293b; line-height: 1.6;">
+      <p>Hi ${userName},</p>
+      <p>We wanted to let you know that a refund has been successfully initiated and processed for your booking on <strong>Solace</strong>.</p>
+      
+      <div style="background: #fff5f5; padding: 24px; border-radius: 8px; margin: 24px 0; border: 1px solid #fee2e2;">
+        <h2 style="margin-top: 0; font-size: 18px; color: #E11D48;">Refund Details</h2>
+        <p style="margin: 8px 0;"><strong>Order ID:</strong> ${orderId}</p>
+        <p style="margin: 8px 0;"><strong>Refunded Amount:</strong> ₹${amount}</p>
+        <p style="margin: 8px 0;"><strong>Status:</strong> Success</p>
+      </div>
+
+      <p>The money will be credited back to your original payment method (UPI/Card/Netbanking) within 5-7 business days depending on your bank's processing times.</p>
+      
+      <p>If you have any questions or need further assistance, please feel free to reply to this email or contact support@solace.com.</p>
+      
+      <hr style="margin: 32px 0; border: 0; border-top: 1px solid #e2e8f0;" />
+      <p style="font-size: 12px; color: #64748b; text-align: center;">
+        Solace • Peer Emotional Support for Students<br/>
+        This is an automated notification regarding your refund.
+      </p>
+    </div>
+  </div>
+`;
+

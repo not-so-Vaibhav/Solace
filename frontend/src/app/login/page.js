@@ -153,24 +153,6 @@ export default function LoginPage() {
               alt="Solace Illustration" 
               className="visual-illustration"
             />
-            <div style={{
-              background: 'white',
-              padding: '20px',
-              borderRadius: '20px',
-              boxShadow: 'var(--card-shadow)',
-              position: 'absolute',
-              bottom: '150px',
-              left: '40px',
-              textAlign: 'left',
-              maxWidth: '200px'
-            }}>
-              <div style={{ fontSize: '14px', fontWeight: '600' }}>Daily Reflection</div>
-              <div style={{ fontSize: '12px', color: 'var(--text3)' }}>10 sessions</div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '10px' }}>
-                <div style={{ width: '40px', height: '40px', borderRadius: '50%', border: '4px solid var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px' }}>84%</div>
-                <div style={{ background: 'var(--accent-light)', padding: '4px 10px', borderRadius: '50px', fontSize: '12px', color: 'var(--accent)' }}>Design</div>
-              </div>
-            </div>
 
             <h2 className="visual-title">Find your calm.</h2>
             <p className="visual-sub">
