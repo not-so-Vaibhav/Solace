@@ -17,8 +17,13 @@ export default function LoginPage() {
   const router = useRouter();
 
   useEffect(() => {
-    if (user && userRole && !authLoading) {
-      if (userRole === 'admin') {
+    if (user && !authLoading) {
+      // Robust redirection: default to student if userRole is loading but user is authenticated
+      const cachedRole = typeof window !== 'undefined' ? localStorage.getItem(`role_${user.id}`) : null;
+      const role = userRole || cachedRole || 'student';
+      
+      console.log('🚀 Redirecting authenticated user to dashboard for role:', role);
+      if (role === 'admin') {
         router.push('/admin/dashboard');
       } else {
         router.push('/dashboard');
@@ -33,24 +38,30 @@ export default function LoginPage() {
     
     try {
       const data = await login(email, password);
-      console.log('✅ Login successful, checking for immediate redirect...');
+      console.log('✅ Login successful, performing robust immediate redirect...');
       
-      // FALLBACK: If the useEffect is slow (mobile), try to redirect now
       if (data?.user) {
-        // We wait a tiny bit for the AuthContext to potentially update userRole
-        setTimeout(async () => {
-          try {
-            const { data: profile } = await supabase.from('users').select('role').eq('id', data.user.id).single();
-            if (profile?.role) {
-              console.log('🚀 Immediate redirect triggered');
-              router.push(profile.role === 'admin' ? '/admin/dashboard' : '/dashboard');
-            }
-          } catch (err) {
-            console.warn('Immediate redirect check failed, relying on useEffect');
+        // Query the role directly for instant response
+        let role = 'student';
+        try {
+          const { data: profile } = await supabase
+            .from('users')
+            .select('role')
+            .eq('id', data.user.id)
+            .single();
+          
+          if (profile?.role) {
+            role = profile.role;
           }
-        }, 800);
+        } catch (dbErr) {
+          console.warn('Direct role query note:', dbErr.message);
+        }
+        
+        console.log('🚀 Direct redirecting to dashboard for role:', role);
+        router.push(role === 'admin' ? '/admin/dashboard' : '/dashboard');
       }
     } catch (err) {
+      console.error('Login error:', err);
       if (err.message === 'Invalid login credentials') {
         setError("We couldn't find an account with those details.\nCheck your email and password and try again.");
       } else {

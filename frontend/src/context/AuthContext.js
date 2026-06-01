@@ -13,7 +13,7 @@ export const AuthProvider = ({ children }) => {
   const router = useRouter();
 
   useEffect(() => {
-    const fetchRole = async (userId, userEmail) => {
+    const fetchRole = async (userId, userEmail, userMetadata) => {
       // 1. Check cache for instant load
       if (typeof window !== 'undefined') {
         const cachedRole = localStorage.getItem(`role_${userId}`);
@@ -37,10 +37,21 @@ export const AuthProvider = ({ children }) => {
         
         if (error) {
           console.warn('ℹ️ Profile not found, attempting auto-creation...');
+          const fullName = userMetadata?.full_name || userEmail.split('@')[0];
+          
           const { data: newData, error: createError } = await supabase
             .from('users')
-            .insert([{ id: userId, email: userEmail, full_name: userEmail.split('@')[0], role: 'student' }])
+            .insert([{ 
+              id: userId, 
+              email: userEmail, 
+              full_name: fullName, 
+              role: 'student' 
+            }])
             .select('role').single();
+
+          if (createError) {
+            console.error('❌ Public profile auto-creation failed:', createError.message);
+          }
 
           const finalRole = newData?.role || 'student';
           setUserRole(finalRole);
@@ -51,6 +62,7 @@ export const AuthProvider = ({ children }) => {
           if (typeof window !== 'undefined') localStorage.setItem(`role_${userId}`, finalRole);
         }
       } catch (err) {
+        console.error('Error fetching role:', err);
         setUserRole('student');
       } finally {
         setLoading(false);
@@ -62,8 +74,8 @@ export const AuthProvider = ({ children }) => {
         const { data: { session } } = await supabase.auth.getSession();
         if (session?.user) {
           setUser(session.user);
-          // Don't await here, let fetchRole handle its own loading/cache logic
-          fetchRole(session.user.id, session.user.email);
+          // Don'\''t await here, let fetchRole handle its own loading/cache logic
+          fetchRole(session.user.id, session.user.email, session.user.user_metadata);
         } else {
           setUser(null);
           setUserRole(null);
@@ -86,7 +98,7 @@ export const AuthProvider = ({ children }) => {
 
       if (session?.user) {
         setUser(session.user);
-        fetchRole(session.user.id, session.user.email);
+        fetchRole(session.user.id, session.user.email, session.user.user_metadata);
       } else {
         setLoading(false);
       }

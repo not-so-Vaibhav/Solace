@@ -18,6 +18,26 @@ export async function POST(request) {
 
     const orderId = `solace_order_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
 
+    // Dynamically detect request origin for bulletproof return URL redirection (localhost, vercel, etc.)
+    const originHeader = request.headers.get('origin');
+    const refererHeader = request.headers.get('referer');
+    let reqOrigin = originHeader;
+    if (!reqOrigin && refererHeader) {
+      try {
+        reqOrigin = new URL(refererHeader).origin;
+      } catch (e) {}
+    }
+    if (!reqOrigin) {
+      const host = request.headers.get('host');
+      const protocol = host?.includes('localhost') ? 'http' : 'https';
+      reqOrigin = host ? `${protocol}://${host}` : (process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000');
+    }
+    
+    // Ensure we use https in production/vercel
+    if (!reqOrigin.includes('localhost') && reqOrigin.startsWith('http://')) {
+      reqOrigin = reqOrigin.replace('http://', 'https://');
+    }
+
     const response = await fetch(`${baseUrl}/orders`, {
       method: 'POST',
       headers: {
@@ -37,7 +57,7 @@ export async function POST(request) {
           customer_phone: customer_phone || '9999999999'
         },
         order_meta: {
-          return_url: `${(process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000').replace('http://', 'https://')}/dashboard?order_id=${orderId}`
+          return_url: `${reqOrigin}/dashboard?order_id=${orderId}`
         }
       })
     });

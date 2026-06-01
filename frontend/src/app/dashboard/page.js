@@ -63,9 +63,130 @@ export default function UserDashboard() {
         router.push('/login');
       } else {
         fetchDashboardData();
+        checkPendingPaymentRedirect();
       }
     }
   }, [user, userRole, loading]);
+
+  const checkPendingPaymentRedirect = async () => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const orderId = params.get('order_id');
+    if (!orderId) return;
+
+    console.log('💳 [Solace] Found order_id in URL:', orderId);
+
+    try {
+      // 1. Check if the payment has already been fulfilled to avoid duplicates
+      const { data: existingPayment } = await supabase
+        .from('payments')
+        .select('id')
+        .eq('provider_payment_id', orderId)
+        .maybeSingle();
+
+      if (existingPayment) {
+        console.log('✅ [Solace] Payment already verified and fulfilled.');
+        // Clean URL parameter
+        router.replace('/dashboard');
+        return;
+      }
+
+      // 2. Fetch pending booking details from localStorage
+      const pendingStr = localStorage.getItem('solace_pending_booking');
+      if (!pendingStr) {
+        console.warn('⚠️ [Solace] No pending booking details found in localStorage.');
+        return;
+      }
+
+      const pending = JSON.parse(pendingStr);
+      console.log('📦 [Solace] Loaded pending booking details:', pending);
+
+      // 3. Verify order status with Cashfree via API
+      const verifyRes = await fetch('/api/cashfree/verify-payment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ order_id: orderId })
+      });
+
+      const verifyData = await verifyRes.json();
+      if (verifyData.order_status === 'PAID') {
+        console.log('🎉 [Solace] Cashfree Payment Verified as PAID. Fulfilling session creation...');
+
+        // Reconstruct scheduled_at timestamp
+        const scheduledAt = new Date(pending.selectedDate);
+        const [time, period] = pending.selectedTime.split(' ');
+        let [hours, minutes] = time.split(':').map(Number);
+        if (period === 'PM' && hours !== 12) hours += 12;
+        if (period === 'AM' && hours === 12) hours = 0;
+        scheduledAt.setHours(hours, minutes, 0, 0);
+
+        // A. Insert Session
+        const { data: session, error: sessionErr } = await supabase
+          .from('sessions')
+          .insert([{
+            student_id: user.id,
+            listener_id: null,
+            format: pending.format,
+            duration: pending.duration === 'quick' ? 25 : 50,
+            scheduled_at: scheduledAt.toISOString(),
+            status: 'confirmed'
+          }])
+          .select()
+          .single();
+
+        if (sessionErr) throw sessionErr;
+
+        // B. Insert Payment
+        const { error: paymentErr } = await supabase
+          .from('payments')
+          .insert([{
+            user_id: user.id,
+            session_id: session.id,
+            provider: 'cashfree',
+            provider_payment_id: orderId,
+            amount: pending.total,
+            status: 'completed'
+          }]);
+
+        if (paymentErr) throw paymentErr;
+
+        // C. Send confirmation emails using client-side helper
+        try {
+          const { sendEmail } = await import('@/lib/email-client');
+          const { getBookingConfirmationTemplate, getPaymentReceiptTemplate } = await import('@/lib/email-templates');
+          const dateStr = scheduledAt.toLocaleDateString();
+          const timeStr = scheduledAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          
+          sendEmail({ 
+            to: user.email, 
+            subject: 'Your Solace Session is Booked!', 
+            html: getBookingConfirmationTemplate(user.user_metadata?.full_name || 'Student', dateStr, timeStr, pending.total) 
+          });
+          
+          sendEmail({ 
+            to: user.email, 
+            subject: 'Payment Receipt - Solace', 
+            html: getPaymentReceiptTemplate(user.user_metadata?.full_name || 'Student', pending.total, orderId) 
+          });
+          
+          console.log('✉️ [Solace] Confirmation and receipt emails sent successfully.');
+        } catch (emailErr) {
+          console.error('Post-booking Email Error:', emailErr);
+        }
+
+        // D. Cleanup and success reload
+        localStorage.removeItem('solace_pending_booking');
+        alert('🎉 Your session has been successfully booked! Welcome to Solace.');
+        router.replace('/dashboard');
+        await fetchDashboardData();
+      } else {
+        console.warn('⚠️ [Solace] Cashfree payment verify status is:', verifyData.order_status);
+      }
+    } catch (err) {
+      console.error('❌ [Solace] Failed to verify/fulfill pending order redirect:', err);
+      alert('We were unable to verify your payment status automatically. Please refresh or contact support if your account was charged.');
+    }
+  };
 
   const fetchDashboardData = async () => {
     if (!user?.id) return;

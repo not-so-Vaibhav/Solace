@@ -108,6 +108,18 @@ export default function BookingPage() {
     setPaymentStatus('loading');
     
     try {
+      // Save pending booking details to localStorage so they survive a mobile redirect
+      const pendingBooking = {
+        selectedDate,
+        selectedTime,
+        format,
+        duration,
+        total,
+      };
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('solace_pending_booking', JSON.stringify(pendingBooking));
+      }
+
       const res = await fetch('/api/cashfree/create-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
