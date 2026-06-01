@@ -190,66 +190,110 @@ export default function UserDashboard() {
 
   const fetchDashboardData = async () => {
     if (!user?.id) return;
-    console.log('🚀 Starting parallel dashboard data fetch...');
+    console.log('🚀 [Dashboard] Starting data fetch via secure API...');
     console.time('DashboardLoadTime');
 
     try {
-      // Fetch profile first as it's critical for the greeting
-      const { data: profileData, error: profileError } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-      
-      if (profileData) {
-        setProfile(profileData);
-        setProfileName(profileData.full_name || '');
+      // Get the current session token to pass to the server
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+
+      if (!token) {
+        console.warn('⚠️ [Dashboard] No active session token, attempting direct client fetch...');
+        await fetchDashboardDataFallback();
+        return;
+      }
+
+      // Call our secure server-side API that resolves identity by EMAIL (fixes OAuth/password UUID mismatch)
+      const res = await fetch('/api/user-data', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (!res.ok) {
+        console.warn('⚠️ [Dashboard] Server API failed, falling back to client fetch...');
+        await fetchDashboardDataFallback();
+        return;
+      }
+
+      const data = await res.json();
+
+      if (data.isIdentityMismatch) {
+        console.log(`🔗 [Dashboard] Identity mismatch resolved — auth_uid: ${data.authUid}, canonical: ${data.canonicalUserId}`);
+      }
+
+      // Populate all state from the server response
+      if (data.profile) {
+        setProfile(data.profile);
+        setProfileName(data.profile.full_name || '');
         setNotifications({
-          session_reminders: profileData.session_reminders ?? true,
-          reflection_emails: profileData.reflection_emails ?? true
+          session_reminders: data.profile.session_reminders ?? true,
+          reflection_emails: data.profile.reflection_emails ?? true
         });
       }
-      if (profileError) console.warn('Profile fetch note:', profileError.message);
 
-      // Fetch everything else in parallel to maximize speed
-      const results = await Promise.allSettled([
-        supabase.from('sessions').select(`*, listener:listener_id(full_name)`).eq('student_id', user.id).order('scheduled_at', { ascending: false }),
+      if (data.sessions) {
+        setSessions(data.sessions);
+        const completed = data.sessions.filter(s => s.status === 'completed').length;
+        setStats(prev => ({ ...prev, sessions: completed }));
+      }
+
+      if (data.journals) {
+        setJournals(data.journals);
+      }
+
+      if (data.payments) {
+        const totalCredits = data.payments.reduce((acc, curr) => acc + Number(curr.amount), 0);
+        setStats(prev => ({ ...prev, credits: totalCredits }));
+      }
+
+      // Fetch AI reflections separately (client-side, lighter query)
+      const { data: reflectionData } = await supabase
+        .from('ai_reflections')
+        .select('*')
+        .eq('user_id', data.canonicalUserId || user.id)
+        .order('created_at', { ascending: false });
+      if (reflectionData) setReflections(reflectionData);
+
+    } catch (error) {
+      console.error('❌ [Dashboard] Critical fetch error:', error);
+      await fetchDashboardDataFallback();
+    } finally {
+      console.timeEnd('DashboardLoadTime');
+    }
+  };
+
+  // Fallback: direct Supabase client queries (works when token is fresh and RLS allows)
+  const fetchDashboardDataFallback = async () => {
+    if (!user?.id) return;
+    console.log('📦 [Dashboard] Running direct client-side fallback fetch...');
+    try {
+      const [profileRes, sessionsRes, journalsRes, reflectionsRes, paymentsRes] = await Promise.allSettled([
+        supabase.from('users').select('*').eq('id', user.id).single(),
+        supabase.from('sessions').select('*, listener:listener_id(full_name)').eq('student_id', user.id).order('scheduled_at', { ascending: false }),
         supabase.from('journal_entries').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
         supabase.from('ai_reflections').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
         supabase.from('payments').select('amount').eq('user_id', user.id).eq('status', 'completed')
       ]);
 
-      // Handle parallel results
-      if (results[0].status === 'fulfilled' && results[0].value.data) {
-        const sessionData = results[0].value.data;
-        setSessions(sessionData);
-        const completed = sessionData.filter(s => s.status === 'completed').length;
-        setStats(prev => ({ ...prev, sessions: completed }));
+      if (profileRes.status === 'fulfilled' && profileRes.value.data) {
+        const p = profileRes.value.data;
+        setProfile(p);
+        setProfileName(p.full_name || '');
+        setNotifications({ session_reminders: p.session_reminders ?? true, reflection_emails: p.reflection_emails ?? true });
       }
-
-      if (results[1].status === 'fulfilled' && results[1].value.data) {
-        setJournals(results[1].value.data);
+      if (sessionsRes.status === 'fulfilled' && sessionsRes.value.data) {
+        const s = sessionsRes.value.data;
+        setSessions(s);
+        setStats(prev => ({ ...prev, sessions: s.filter(x => x.status === 'completed').length }));
       }
-
-      if (results[2].status === 'fulfilled' && results[2].value.data) {
-        setReflections(results[2].value.data);
-      }
-
-      if (results[3].status === 'fulfilled' && results[3].value.data) {
-        const payments = results[3].value.data;
-        const totalCredits = payments.reduce((acc, curr) => acc + Number(curr.amount), 0);
+      if (journalsRes.status === 'fulfilled' && journalsRes.value.data) setJournals(journalsRes.value.data);
+      if (reflectionsRes.status === 'fulfilled' && reflectionsRes.value.data) setReflections(reflectionsRes.value.data);
+      if (paymentsRes.status === 'fulfilled' && paymentsRes.value.data) {
+        const totalCredits = paymentsRes.value.data.reduce((acc, curr) => acc + Number(curr.amount), 0);
         setStats(prev => ({ ...prev, credits: totalCredits }));
       }
-
-      // Log errors for failed parallel requests
-      results.forEach((res, i) => {
-        if (res.status === 'rejected') console.error(`Table ${i} fetch failed:`, res.reason);
-      });
-
-    } catch (error) {
-      console.error('Critical dashboard fetch error:', error);
-    } finally {
-      console.timeEnd('DashboardLoadTime');
+    } catch (err) {
+      console.error('❌ [Dashboard] Fallback fetch also failed:', err);
     }
   };
 
