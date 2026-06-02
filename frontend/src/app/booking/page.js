@@ -32,6 +32,7 @@ export default function BookingPage() {
   const [showFullCalendar, setShowFullCalendar] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [blockedSlots, setBlockedSlots] = useState([]);
+  const [bookedSlots, setBookedSlots] = useState([]);
   const [cashfree, setCashfree] = useState(null);
   const [paymentStatus, setPaymentStatus] = useState('idle');
 
@@ -57,9 +58,44 @@ export default function BookingPage() {
   }, [selectedDate]);
 
   const fetchBlockedSlots = async () => {
-    const dateStr = selectedDate.toISOString().split('T')[0];
-    const { data } = await supabase.from('blocked_slots').select('time').eq('date', dateStr);
-    setBlockedSlots(data?.map(s => s.time) || []);
+    const year = selectedDate.getFullYear();
+    const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
+    const day = String(selectedDate.getDate()).padStart(2, '0');
+    const dateStr = `${year}-${month}-${day}`;
+    const firstDayOfMonth = `${year}-${month}-01`;
+    
+    // 1. Fetch blocked slots
+    const { data: blocked } = await supabase
+      .from('blocked_slots')
+      .select('time')
+      .or(`date.eq.${dateStr},date.eq.${firstDayOfMonth}`);
+      
+    setBlockedSlots(blocked?.map(s => s.time) || []);
+
+    // 2. Fetch active sessions on this day
+    const startOfDay = new Date(selectedDate);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(selectedDate);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const { data: sessions } = await supabase
+      .from('sessions')
+      .select('scheduled_at')
+      .in('status', ['booked', 'confirmed', 'assigned', 'started'])
+      .gte('scheduled_at', startOfDay.toISOString())
+      .lte('scheduled_at', endOfDay.toISOString());
+
+    const booked = sessions?.map(s => {
+      const d = new Date(s.scheduled_at);
+      let hours = d.getHours();
+      const minutes = String(d.getMinutes()).padStart(2, '0');
+      const period = hours >= 12 ? 'PM' : 'AM';
+      if (hours > 12) hours -= 12;
+      if (hours === 0) hours = 12;
+      return `${hours}:${minutes} ${period}`;
+    }) || [];
+
+    setBookedSlots(booked);
   };
 
   const formats = [
@@ -424,7 +460,14 @@ export default function BookingPage() {
                     animate="animate"
                   >
                     {timeSlots.map(time => {
-                      const isBlocked = blockedSlots.includes(time);
+                      const isBlocked = blockedSlots.includes(time) || 
+                                        blockedSlots.includes('ALL') || 
+                                        blockedSlots.includes('MONTH') || 
+                                        blockedSlots.includes(`FORMAT:${format}`) ||
+                                        blockedSlots.includes(`${format}:${time}`) ||
+                                        blockedSlots.includes(`${format}:ALL`) ||
+                                        blockedSlots.includes(`${format}:MONTH`) ||
+                                        bookedSlots.includes(time);
                       return (
                         <motion.div 
                           key={time} 

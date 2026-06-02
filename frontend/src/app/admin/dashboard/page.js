@@ -22,7 +22,10 @@ export default function AdminDashboard() {
   const [bookings, setBookings] = useState([]);
   const [blockedSlots, setBlockedSlots] = useState([]);
   const [newBlockDate, setNewBlockDate] = useState('');
+  const [newBlockEndDate, setNewBlockEndDate] = useState('');
   const [newBlockTime, setNewBlockTime] = useState('');
+  const [customBlockTime, setCustomBlockTime] = useState('');
+  const [newBlockFormat, setNewBlockFormat] = useState('ALL');
   const [isLoading, setIsLoading] = useState(true);
   const [listeners, setListeners] = useState([]);
   const [reviews, setReviews] = useState([]);
@@ -269,10 +272,54 @@ export default function AdminDashboard() {
 
   const handleBlockSlot = async () => {
     if (!newBlockDate || !newBlockTime) return;
-    const { error } = await supabase.from('blocked_slots').insert([{ date: newBlockDate, time: newBlockTime }]);
+    
+    let timeToStore = newBlockTime;
+    if (newBlockTime === 'CUSTOM') {
+      if (!customBlockTime.trim()) return alert("Please enter a custom time (e.g., 3:15 PM)");
+      timeToStore = customBlockTime.trim();
+    }
+    
+    if (newBlockFormat !== 'ALL') {
+      timeToStore = `${newBlockFormat}:${timeToStore}`;
+    }
+    
+    if (newBlockTime === 'RANGE') {
+      if (!newBlockEndDate) return alert('Please select an end date for the range.');
+      const start = new Date(newBlockDate);
+      const end = new Date(newBlockEndDate);
+      if (end < start) return alert('End date cannot be before start date.');
+      
+      let currentDate = new Date(start);
+      const inserts = [];
+      const val = newBlockFormat !== 'ALL' ? `${newBlockFormat}:ALL` : 'ALL';
+      while (currentDate <= end) {
+        inserts.push({ date: currentDate.toISOString().split('T')[0], time: val });
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
+      
+      const { error } = await supabase.from('blocked_slots').insert(inserts);
+      if (!error) {
+        setNewBlockDate('');
+        setNewBlockEndDate('');
+        setNewBlockTime('');
+        setCustomBlockTime('');
+        setNewBlockFormat('ALL');
+        fetchAdminData();
+      }
+      return;
+    }
+
+    let dateToStore = newBlockDate;
+    if (newBlockTime === 'MONTH') {
+      dateToStore = newBlockDate.substring(0, 8) + '01'; // e.g., '2026-06-01'
+    }
+
+    const { error } = await supabase.from('blocked_slots').insert([{ date: dateToStore, time: timeToStore }]);
     if (!error) {
       setNewBlockDate('');
       setNewBlockTime('');
+      setCustomBlockTime('');
+      setNewBlockFormat('ALL');
       fetchAdminData();
     }
   };
@@ -686,9 +733,27 @@ export default function AdminDashboard() {
                 <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '24px', color: 'var(--text)' }}>Block a New Time Slot</h3>
                 <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
                   <input type="date" value={newBlockDate} onChange={e => setNewBlockDate(e.target.value)} style={{ flex: 1, minWidth: '200px', padding: '16px', borderRadius: '12px', border: '1px solid var(--border)', background: '#fff', fontSize: '15px' }} />
+                  {newBlockTime === 'RANGE' && (
+                    <input type="date" value={newBlockEndDate} onChange={e => setNewBlockEndDate(e.target.value)} style={{ flex: 1, minWidth: '200px', padding: '16px', borderRadius: '12px', border: '1px solid var(--border)', background: '#fff', fontSize: '15px' }} />
+                  )}
+                  {newBlockTime === 'CUSTOM' && (
+                    <input type="text" placeholder="e.g. 3:15 PM" value={customBlockTime} onChange={e => setCustomBlockTime(e.target.value)} style={{ flex: 1, minWidth: '150px', padding: '16px', borderRadius: '12px', border: '1px solid var(--border)', background: '#fff', fontSize: '15px' }} />
+                  )}
+                  <select value={newBlockFormat} onChange={e => setNewBlockFormat(e.target.value)} style={{ flex: 1, minWidth: '150px', padding: '16px', borderRadius: '12px', border: '1px solid var(--border)', background: '#fff', fontSize: '15px' }}>
+                    <option value="ALL">All Session Types</option>
+                    <option value="chat">Chat Session</option>
+                    <option value="meet">Meet Session</option>
+                    <option value="inperson">In-Person</option>
+                  </select>
                   <select value={newBlockTime} onChange={e => setNewBlockTime(e.target.value)} style={{ flex: 1, minWidth: '200px', padding: '16px', borderRadius: '12px', border: '1px solid var(--border)', background: '#fff', fontSize: '15px' }}>
-                    <option value="">Select Time</option>
-                    {['9:00 AM', '10:30 AM', '12:00 PM', '2:00 PM', '4:30 PM', '6:00 PM', '7:30 PM', '9:00 PM'].map(t => <option key={t} value={t}>{t}</option>)}
+                    <option value="">Select Time / Block Type</option>
+                    <option value="ALL">Entire Day (All Slots)</option>
+                    <option value="MONTH">Entire Month (Based on selected date)</option>
+                    <option value="RANGE">Date Range (Block Multiple Days)</option>
+                    <option value="CUSTOM">Custom Time...</option>
+                    <optgroup label="Specific Time Slots">
+                      {['9:00 AM', '10:30 AM', '12:00 PM', '2:00 PM', '4:30 PM', '6:00 PM', '7:30 PM', '9:00 PM'].map(t => <option key={t} value={t}>{t}</option>)}
+                    </optgroup>
                   </select>
                   <button 
                     onClick={handleBlockSlot} 
@@ -726,8 +791,36 @@ export default function AdminDashboard() {
                     ) : (
                       blockedSlots.map(s => (
                         <tr key={s.id} style={{ borderBottom: '1px solid var(--border)' }}>
-                          <td style={{ padding: '20px 24px', color: 'var(--text)', fontWeight: '500' }}>{new Date(s.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}</td>
-                          <td style={{ padding: '20px 24px', color: 'var(--text2)' }}>{s.time}</td>
+                          <td style={{ padding: '20px 24px', color: 'var(--text)', fontWeight: '500' }}>
+                            {s.time === 'MONTH' || s.time.endsWith(':MONTH') ? (
+                              (() => {
+                                const [year, month] = s.date.split('-');
+                                const d = new Date(year, month - 1, 1);
+                                return d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+                              })()
+                            ) : (
+                              (() => {
+                                const [year, month, day] = s.date.split('-');
+                                const d = new Date(year, month - 1, day);
+                                return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+                              })()
+                            )}
+                          </td>
+                          <td style={{ padding: '20px 24px', color: 'var(--text2)' }}>
+                            {(() => {
+                              if (s.time === 'ALL') return 'Entire Day';
+                              if (s.time === 'MONTH') return 'Entire Month';
+                              if (s.time.startsWith('FORMAT:')) return `All ${s.time.split(':')[1]} Sessions`;
+                              if (s.time.includes(':') && ['chat','meet','inperson'].includes(s.time.split(':')[0])) {
+                                const format = s.time.split(':')[0];
+                                const timePart = s.time.substring(format.length + 1);
+                                if (timePart === 'ALL') return `Entire Day (${format})`;
+                                if (timePart === 'MONTH') return `Entire Month (${format})`;
+                                return `${timePart} (${format})`;
+                              }
+                              return s.time;
+                            })()}
+                          </td>
                           <td style={{ padding: '20px 24px' }}>
                             <button 
                               onClick={() => handleUnblockSlot(s.id)} 
