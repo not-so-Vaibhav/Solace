@@ -77,7 +77,7 @@ export async function GET(request) {
 
     // 7. Fetch journals
     const { data: journals } = await supabaseAdmin
-      .from('journals')
+      .from('journal_entries')
       .select('*')
       .eq('user_id', canonicalUserId)
       .order('created_at', { ascending: false });
