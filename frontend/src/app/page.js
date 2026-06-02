@@ -190,20 +190,15 @@ export default function LandingPage() {
               whileInView="animate"
               viewport={{ once: true }}
             >
-              {[
-                { num: stats.sessions, label: 'Sessions' },
-                { num: stats.rating, label: 'Rating' }
-              ].map((stat, i) => (
-                <motion.div 
-                   key={i} 
-                   className="stat-pill"
-                   variants={fadeInUp}
-                   whileHover={{ y: -5, boxShadow: 'var(--card-shadow-hover)' }}
-                >
-                   <span className="stat-num">{stat.num}</span>
-                   <div className="stat-label">{stat.label}</div>
-                </motion.div>
-              ))}
+              <motion.div 
+                 className="stat-pill"
+                 style={{ width: '100%' }}
+                 variants={fadeInUp}
+                 whileHover={{ y: -5, boxShadow: 'var(--card-shadow-hover)' }}
+              >
+                 <span className="stat-num">{stats.sessions}+</span>
+                 <div className="stat-label">conversations facilitated</div>
+              </motion.div>
             </motion.div>
 
             <motion.button 
@@ -290,9 +285,9 @@ export default function LandingPage() {
         whileInView={{ opacity: 1 }}
         viewport={{ once: true }}
       >
-        <p style={{ fontSize: '13px', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '20px' }}>Trusted by students from across campus</p>
+        <p style={{ fontSize: '13px', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '20px' }}>Growing Student Community</p>
         <div style={{ display: 'flex', justifyContent: 'center', gap: '40px', opacity: 0.5, flexWrap: 'wrap' }}>
-          {['UNIVERSITY MEDICAL', 'PSYCH SOCIETY', 'STUDENT COUNCIL', 'WELLNESS HUB'].map((logo, i) => (
+          {['Peer Support Sessions', 'Student Listeners', 'Safe Conversations', 'Community Driven'].map((logo, i) => (
             <motion.div 
               key={i} 
               style={{ fontWeight: '600', fontSize: '18px' }}

@@ -216,6 +216,17 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleDeleteSession = async (session) => {
+    if (!window.confirm('Are you sure you want to permanently delete this session? This action cannot be undone.')) return;
+    
+    const { error } = await supabase.from('sessions').delete().eq('id', session.id);
+    if (!error) {
+      fetchAdminData();
+    } else {
+      alert('Error deleting session: ' + error.message);
+    }
+  };
+
   const handleClearCancelledSessions = async () => {
     if (!window.confirm('Are you sure you want to permanently delete all cancelled sessions?')) return;
     
@@ -654,6 +665,7 @@ export default function AdminDashboard() {
                                 {['booked', 'confirmed', 'assigned'].includes(b.status) && (
                                   <button onClick={() => handleCancelSession(b)} style={{ padding: '4px 8px', fontSize: '10px', background: '#FEE2E2', color: '#DC2626', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Cancel</button>
                                 )}
+                                <button onClick={() => handleDeleteSession(b)} style={{ padding: '4px 8px', fontSize: '10px', background: '#111827', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Delete</button>
                               </div>
                             </div>
                           </td>
