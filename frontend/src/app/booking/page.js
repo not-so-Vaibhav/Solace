@@ -232,6 +232,30 @@ export default function BookingPage() {
         const timeStr = scheduledAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         sendEmail({ to: user.email, subject: 'Your Solace Session is Booked!', html: getBookingConfirmationTemplate(user.user_metadata?.full_name || 'Student', dateStr, timeStr, total) });
         sendEmail({ to: user.email, subject: 'Payment Receipt - Solace', html: getPaymentReceiptTemplate(user.user_metadata?.full_name || 'Student', total, cashfreeOrderId) });
+        
+        // Notify Admin of the new booking
+        sendEmail({
+          to: 'solacevaibhav@gmail.com',
+          subject: `New Booking: ${user.user_metadata?.full_name || 'Student'} - Solace`,
+          html: `
+            <div style="font-family: sans-serif; padding: 20px; line-height: 1.6; color: #111;">
+              <h2 style="color: #0F5B46;">New Booking Alert 🔔</h2>
+              <p>Hello Admin,</p>
+              <p>A new student session has been successfully booked and paid for on Solace.</p>
+              <div style="background: #F3F4F6; padding: 16px; border-radius: 8px; margin: 20px 0;">
+                <p style="margin: 4px 0;"><strong>Student Name:</strong> ${user.user_metadata?.full_name || 'Student'}</p>
+                <p style="margin: 4px 0;"><strong>Student Email:</strong> ${user.email}</p>
+                <p style="margin: 4px 0;"><strong>Scheduled Date:</strong> ${dateStr}</p>
+                <p style="margin: 4px 0;"><strong>Scheduled Time:</strong> ${timeStr} IST</p>
+                <p style="margin: 4px 0;"><strong>Session Format:</strong> ${format}</p>
+                <p style="margin: 4px 0;"><strong>Duration:</strong> ${duration === 'quick' ? '25 min' : '50 min'}</p>
+                <p style="margin: 4px 0;"><strong>Amount Paid:</strong> ₹${total}</p>
+                <p style="margin: 4px 0;"><strong>Transaction ID:</strong> ${cashfreeOrderId}</p>
+              </div>
+              <p>Please log in to the <a href="https://solace-pro.vercel.app/admin/dashboard" style="color: #0F5B46; font-weight: bold;">Admin Dashboard</a> to assign a listener for this session.</p>
+            </div>
+          `
+        });
       } catch (emailErr) {
         console.error('Post-booking Email Error:', emailErr);
       }
