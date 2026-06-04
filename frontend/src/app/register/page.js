@@ -13,7 +13,6 @@ export default function RegisterPage() {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [role, setRole] = useState('student');
   const router = useRouter();
 
   const handleRegister = async (e) => {
@@ -42,7 +41,7 @@ export default function RegisterPage() {
             id: data.user.id, 
             email, 
             full_name: fullName,
-            role: role // Use selected role
+            role: 'student'
           }
         ]);
 
@@ -81,23 +80,6 @@ export default function RegisterPage() {
             )}
 
             <form onSubmit={handleRegister}>
-              <div style={{ display: 'flex', gap: '8px', marginBottom: '24px' }}>
-                <button 
-                  type="button" 
-                  onClick={() => setRole('student')}
-                  style={{ flex: 1, padding: '10px', borderRadius: '50px', border: '1px solid var(--border)', background: role === 'student' ? 'var(--text)' : 'transparent', color: role === 'student' ? '#fff' : 'var(--text)', cursor: 'pointer', fontSize: '13px', fontWeight: '500' }}
-                >
-                  Register as Student
-                </button>
-                <button 
-                  type="button" 
-                  onClick={() => setRole('admin')}
-                  style={{ flex: 1, padding: '10px', borderRadius: '50px', border: '1px solid var(--border)', background: role === 'admin' ? 'var(--text)' : 'transparent', color: role === 'admin' ? '#fff' : 'var(--text)', cursor: 'pointer', fontSize: '13px', fontWeight: '500' }}
-                >
-                  Register as Admin
-                </button>
-              </div>
-
               <div className="input-group">
                 <input 
                   type="text" 
@@ -131,7 +113,7 @@ export default function RegisterPage() {
               </div>
 
               <button type="submit" className="login-btn-large" disabled={loading || success}>
-                {loading ? 'Creating account...' : `Register as ${role === 'admin' ? 'Admin' : 'Student'}`}
+                {loading ? 'Creating account...' : 'Register'}
               </button>
             </form>
 
