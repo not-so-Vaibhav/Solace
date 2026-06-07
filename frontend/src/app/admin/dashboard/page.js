@@ -686,7 +686,7 @@ export default function AdminDashboard() {
                                 {b.status === 'assigned' && (
                                   <button onClick={() => { 
                                     handleUpdateStatus(b.id, 'started'); 
-                                    if (b.format !== 'Chat Session') {
+                                    if (!b.format?.toLowerCase().includes('chat')) {
                                       window.open(`https://meet.jit.si/Solace-Session-${b.id}`, '_blank'); 
                                     } else {
                                       setActiveChatSessionId(b.id);
@@ -695,7 +695,7 @@ export default function AdminDashboard() {
                                 )}
                                 {b.status === 'started' && (
                                   <>
-                                    {b.format !== 'Chat Session' ? (
+                                    {!b.format?.toLowerCase().includes('chat') ? (
                                       <button onClick={() => window.open(`https://meet.jit.si/Solace-Session-${b.id}`, '_blank')} style={{ padding: '4px 8px', fontSize: '10px', background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Join</button>
                                     ) : (
                                       <button onClick={() => setActiveChatSessionId(b.id)} style={{ padding: '4px 8px', fontSize: '10px', background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Open Chat</button>

@@ -60,7 +60,10 @@ export async function GET(request) {
     const results = await Promise.allSettled(
       sessions.map(async (session) => {
         const studentEmail = session.student?.email;
-        const jitsiLink = `https://meet.jit.si/Solace-Session-${session.id}`;
+        const isChat = session.format?.toLowerCase().includes('chat');
+        const sessionLink = isChat 
+          ? 'https://solace-wellness.vercel.app/dashboard' 
+          : `https://meet.jit.si/Solace-Session-${session.id}`;
         const sessionTime = new Date(session.scheduled_at).toLocaleTimeString('en-IN', { 
           hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata' 
         });
@@ -83,11 +86,11 @@ export async function GET(request) {
                 <p style="font-size: 16px;">Hi <strong>${session.student?.full_name || 'there'}</strong>,</p>
                 <p>This is a reminder that your session with <strong>${session.listener?.full_name || 'your listener'}</strong> is scheduled for today at <strong>${sessionTime} IST</strong>.</p>
                 <div style="text-align: center; margin: 32px 0;">
-                  <a href="${jitsiLink}" style="background: #517C71; color: white; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px; display: inline-block;">
-                    Join Session →
+                  <a href="${sessionLink}" style="background: #517C71; color: white; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px; display: inline-block;">
+                    ${isChat ? 'Open Chat →' : 'Join Session →'}
                   </a>
                 </div>
-                <p style="color: #6b7280; font-size: 13px;">The join button will become active once your listener starts the session. If the listener hasn't started within 10 minutes of the scheduled time, please contact support.</p>
+                <p style="color: #6b7280; font-size: 13px;">${isChat ? 'The chat will become active once your listener starts the session.' : 'The join button will become active once your listener starts the session. If the listener hasn\'t started within 10 minutes of the scheduled time, please contact support.'}</p>
                 <p>Take care,<br/><strong>The Solace Team</strong></p>
               </div>
             </div>

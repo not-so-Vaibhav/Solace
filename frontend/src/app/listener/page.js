@@ -22,7 +22,7 @@ export default function ListenerDashboard() {
 
   const handleStartSession = async (session) => {
     await supabase.from('sessions').update({ status: 'started' }).eq('id', session.id);
-    if (session.format === 'Chat Session') {
+    if (session.format?.toLowerCase().includes('chat')) {
       setActiveChatSessionId(session.id);
     } else {
       window.open(`https://meet.jit.si/Solace-Session-${session.id}`, '_blank');
@@ -80,7 +80,7 @@ export default function ListenerDashboard() {
                       {s.status === 'assigned' && (
                         <button onClick={() => handleStartSession(s)} style={{ padding: '8px 16px', background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: '600' }}>Start Session</button>
                       )}
-                      {s.status === 'started' && s.format !== 'Chat Session' && (
+                      {s.status === 'started' && !s.format?.toLowerCase().includes('chat') && (
                         <button onClick={() => window.open(`https://meet.jit.si/Solace-Session-${s.id}`, '_blank')} style={{ padding: '8px 16px', background: '#3B82F6', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: '600' }}>Join Meeting</button>
                       )}
                       {s.status === 'completed' && <span style={{ color: '#10B981', fontWeight: '600' }}>Completed</span>}

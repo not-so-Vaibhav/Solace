@@ -771,7 +771,7 @@ export default function UserDashboard() {
                                 Open Chat 💬
                               </motion.button>
                             ) : null}
-                            {upcoming.status === 'started' && upcoming.format !== 'Chat Session' ? (
+                            {upcoming.status === 'started' && !upcoming.format?.toLowerCase().includes('chat') ? (
                               <motion.button 
                                 whileHover={{ scale: 1.02 }}
                                 whileTap={{ scale: 0.98 }}
@@ -920,7 +920,7 @@ export default function UserDashboard() {
                               Chat 💬
                             </motion.button>
                           ) : null}
-                          {s.status === 'started' && s.format !== 'Chat Session' ? (
+                          {s.status === 'started' && !s.format?.toLowerCase().includes('chat') ? (
                             <motion.button 
                               whileHover={{ scale: 1.05 }}
                               whileTap={{ scale: 0.95 }}
